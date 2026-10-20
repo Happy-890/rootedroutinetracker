@@ -12,7 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FinanceRouteImport } from './routes/finance'
 import { Route as GratitudeRouteImport } from './routes/gratitude'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as JournalRouteImport } from './routes/journal'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SettingsRouteImport } from './routes/settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,9 +32,24 @@ const GratitudeRoute = GratitudeRouteImport.update({
   path: '/gratitude',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JournalRoute = JournalRouteImport.update({
   id: '/journal',
   path: '/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -39,34 +57,68 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/finance': typeof FinanceRoute
   '/gratitude': typeof GratitudeRoute
+  '/history': typeof HistoryRoute
   '/journal': typeof JournalRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/finance': typeof FinanceRoute
   '/gratitude': typeof GratitudeRoute
+  '/history': typeof HistoryRoute
   '/journal': typeof JournalRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/finance': typeof FinanceRoute
   '/gratitude': typeof GratitudeRoute
+  '/history': typeof HistoryRoute
   '/journal': typeof JournalRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/finance' | '/gratitude' | '/journal'
+  fullPaths:
+    | '/'
+    | '/finance'
+    | '/gratitude'
+    | '/history'
+    | '/journal'
+    | '/reset-password'
+    | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/finance' | '/gratitude' | '/journal'
-  id: '__root__' | '/' | '/finance' | '/gratitude' | '/journal'
+  to:
+    | '/'
+    | '/finance'
+    | '/gratitude'
+    | '/history'
+    | '/journal'
+    | '/reset-password'
+    | '/settings'
+  id:
+    | '__root__'
+    | '/'
+    | '/finance'
+    | '/gratitude'
+    | '/history'
+    | '/journal'
+    | '/reset-password'
+    | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FinanceRoute: typeof FinanceRoute
   GratitudeRoute: typeof GratitudeRoute
+  HistoryRoute: typeof HistoryRoute
   JournalRoute: typeof JournalRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SettingsRoute: typeof SettingsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,11 +144,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GratitudeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/journal': {
       id: '/journal'
       path: '/journal'
       fullPath: '/journal'
       preLoaderRoute: typeof JournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -106,7 +179,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FinanceRoute: FinanceRoute,
   GratitudeRoute: GratitudeRoute,
+  HistoryRoute: HistoryRoute,
   JournalRoute: JournalRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
