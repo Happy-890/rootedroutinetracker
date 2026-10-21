@@ -12,11 +12,13 @@ type Search = { view: "activity" | "entries"; kind: "all" | "learn" | "gratitude
 
 export const Route = createFileRoute("/history")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    view: s.view === "entries" ? "entries" : "activity",
-    kind: (["learn", "gratitude", "journal"] as const).includes(s.kind as never) ? (s.kind as Search["kind"]) : "all",
+    view: s["view"] === "entries" ? "entries" : "activity",
+    kind: (["learn", "gratitude", "journal"] as const).includes(s["kind"] as never) ? (s["kind"] as Search["kind"]) : "all",
   }),
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "History — Rooted" },
       { name: "description", content: "Your daily activity and archived entries." },
       { property: "og:title", content: "History — Rooted" },
@@ -47,7 +49,7 @@ function HistoryPage() {
 
 function Activity() {
   const { data } = useRooted();
-  const dates = [...new Set(Object.keys(data.records).map((k) => k.split("|")[0]))].sort().reverse();
+  const dates = [...new Set(Object.keys(data.records).map((k) => k.split("|")[0] ?? ""))].sort().reverse();
   if (!dates.length) return <p className="rounded-3xl bg-card p-6 text-center text-muted-foreground">No activity yet. Complete a habit on Home to start.</p>;
   return (
     <ul className="space-y-2">
@@ -99,9 +101,9 @@ function EntryItem({ e }: { e: Entry }) {
   const f = fields(e);
   const title = e.kind === "journal" ? `Journal · ${JOURNAL_LABEL[(e.subtype ?? "freeflow") as JournalType]}` : e.kind === "learn" ? "Learn" : "Gratitude";
   async function saveEdit() {
-    if (!edit || edit.some((v) => !v.trim())) return toast.error("Fields can't be empty.");
+    if (!edit || edit.some((v) => !v.trim())) { toast.error("Fields can't be empty."); return; }
     const c = e.content as { items?: unknown; answers?: { q: string }[] };
-    const content = c.answers ? { answers: c.answers.map((x, i) => ({ q: x.q, a: edit[i].trim() })) } : c.items ? { items: edit.map((v) => v.trim()) } : { text: edit[0].trim() };
+    const content = c.answers ? { answers: c.answers.map((x, i) => ({ q: x.q, a: (edit[i] ?? "").trim() })) } : c.items ? { items: edit.map((v) => v.trim()) } : { text: (edit[0] ?? "").trim() };
     if (await editEntry(e.id, e.subtype, content)) { setEdit(null); toast.success("Updated"); } else toast.error("Couldn't save. Your edits are kept.");
   }
   return (

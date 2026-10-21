@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/journal")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Journal — Rooted" },
       { name: "description", content: "Free-Flow, Re-Frame and Devotional journaling." },
       { property: "og:title", content: "Journal — Rooted" },
@@ -38,7 +40,7 @@ function Journal() {
     let content: Record<string, unknown>;
     if (type === "reframe") {
       if (rf.some((a) => a.trim().length < MIN_ANSWER)) return;
-      content = { answers: REFRAME_PROMPTS.map((q, i) => ({ q, a: rf[i].trim() })) };
+      content = { answers: REFRAME_PROMPTS.map((q, i) => ({ q, a: (rf[i] ?? "").trim() })) };
     } else {
       const t = (type === "freeflow" ? free : dev).trim();
       if (!t) return;
@@ -76,11 +78,11 @@ function Journal() {
       <div className="mt-4 space-y-3 rounded-3xl bg-card p-4">
         {type === "reframe" ? (
           REFRAME_PROMPTS.map((q, i) => {
-            const bad = tried && rf[i].trim().length < MIN_ANSWER;
+            const bad = tried && (rf[i] ?? "").trim().length < MIN_ANSWER;
             return (
               <div key={i}>
                 <label htmlFor={`rf${i}`} className="font-bold">{i + 1}. {q}</label>
-                <Textarea id={`rf${i}`} rows={3} value={rf[i]} aria-invalid={bad} onChange={(e) => setRf(rf.map((x, j) => (j === i ? e.target.value : x)))} className="mt-1 bg-surface" />
+                <Textarea id={`rf${i}`} placeholder="Write your text here" rows={3} value={rf[i] ?? ""} aria-invalid={bad} onChange={(e) => setRf(rf.map((x, j) => (j === i ? e.target.value : x)))} className="mt-1 bg-surface" />
                 {bad && <p className="text-sm text-destructive">Please write an answer.</p>}
               </div>
             );
@@ -90,6 +92,7 @@ function Journal() {
             <label htmlFor="je" className="font-bold">Journal Entry</label>
             <Textarea
               id="je"
+              placeholder="Write your text here"
               rows={10}
               value={type === "freeflow" ? free : dev}
               onChange={(e) => (type === "freeflow" ? setFree : setDev)(e.target.value)}

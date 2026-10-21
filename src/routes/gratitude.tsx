@@ -10,6 +10,8 @@ import { isDone } from "@/lib/rooted/logic";
 export const Route = createFileRoute("/gratitude")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Gratitude — Rooted" },
       { name: "description", content: "Write three things you are grateful for." },
       { property: "og:title", content: "Gratitude — Rooted" },
@@ -49,6 +51,7 @@ function Gratitude() {
             <label htmlFor={`g${i}`} className="text-sm font-bold text-muted-foreground">{i + 1}.</label>
             <Textarea
               id={`g${i}`}
+              placeholder="I am grateful for..."
               rows={2}
               value={v}
               aria-invalid={tried && !v.trim()}

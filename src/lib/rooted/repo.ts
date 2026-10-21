@@ -150,9 +150,9 @@ export class CloudRepo implements Repo {
   /** One-time, non-destructive import of device data; duplicates are ignored. */
   async importGuest(g: RootedData) {
     offlineGuard();
-    const recs = Object.keys(g.records).map((k) => {
+    const recs = Object.keys(g.records).flatMap((k) => {
       const [local_date, activity] = k.split("|");
-      return { user_id: this.userId, local_date, activity };
+      return local_date && activity ? [{ user_id: this.userId, local_date, activity }] : [];
     });
     if (recs.length) {
       const { error } = await supabase

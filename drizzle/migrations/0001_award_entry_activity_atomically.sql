@@ -1,0 +1,4 @@
+CREATE OR REPLACE FUNCTION public.award_entry_activity() RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$ BEGIN INSERT INTO public.activity_records (user_id, local_date, activity) VALUES (NEW.user_id, NEW.local_date, NEW.kind) ON CONFLICT (user_id, local_date, activity) DO NOTHING; RETURN NEW; END; $$;
+CREATE TRIGGER award_entry_activity AFTER INSERT ON public.entries FOR EACH ROW EXECUTE FUNCTION public.award_entry_activity();
+REVOKE ALL ON FUNCTION public.award_entry_activity() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.award_entry_activity() TO authenticated, service_role;

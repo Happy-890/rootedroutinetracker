@@ -11,10 +11,12 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/finance")({
   validateSearch: (s: Record<string, unknown>): { tab: "learn" | "plan" } => ({
-    tab: s.tab === "plan" ? "plan" : "learn",
+    tab: s["tab"] === "plan" ? "plan" : "learn",
   }),
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Finance — Rooted" },
       { name: "description", content: "Log what you learned and plan your day." },
       { property: "og:title", content: "Finance — Rooted" },
@@ -57,7 +59,7 @@ function Learn() {
   const done = isDone(data, today, "learn");
 
   async function submit() {
-    if (!text.trim()) return setErr("Write what you learned first.");
+    if (!text.trim()) { setErr("Write what you learned first."); return; }
     setErr("");
     setBusy(true);
     const ok = await createEntry("learn", null, { text: text.trim() });
@@ -72,7 +74,7 @@ function Learn() {
   return (
     <div className="space-y-3 rounded-3xl bg-card p-4">
       <label htmlFor="learn" className="text-lg font-extrabold">What have you learned?</label>
-      <Textarea id="learn" rows={7} value={text} onChange={(e) => setText(e.target.value)} aria-invalid={!!err} className="bg-surface" />
+      <Textarea id="learn" placeholder="Write your text here" rows={7} value={text} onChange={(e) => setText(e.target.value)} aria-invalid={!!err} className="bg-surface" />
       {err && <p className="text-sm text-destructive">{err}</p>}
       {done && <p className="text-sm text-teal">Learn point earned today. More entries are welcome.</p>}
       <SaveStatus />
