@@ -18,7 +18,7 @@ export default defineConfig({
       devOptions: { enabled: false },
       workbox: {
         globPatterns: ["**/*.{js,css,png,webmanifest,woff2}"],
-        navigateFallback: undefined,
+        navigateFallback: null,
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
