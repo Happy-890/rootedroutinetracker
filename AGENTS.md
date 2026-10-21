@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep RootedProvider and the single toast host in the root shell so all content routes share account state.
+- Keep scoring and local calendar arithmetic in the pure Rooted logic module so rules are independently testable.
+- Use the managed Lovable OAuth helper for social sign-in so preview and published login share the supported flow.
