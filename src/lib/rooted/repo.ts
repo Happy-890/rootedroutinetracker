@@ -73,8 +73,8 @@ export class CloudRepo implements Repo {
     offlineGuard();
     const [p, r, e] = await Promise.all([
       supabase.from("profiles").select("display_name,timezone").eq("id", this.userId).maybeSingle(),
-      supabase.from("activity_records").select("local_date,activity").limit(10000),
-      supabase.from("entries").select("*").order("created_at", { ascending: false }).limit(5000),
+      this.loadRecords(),
+      this.loadEntries(),
     ]);
     if (p.error) throw p.error;
     if (r.error) throw r.error;
@@ -94,6 +94,24 @@ export class CloudRepo implements Repo {
       })),
       profile: p.data ?? { display_name: "", timezone: "America/Chicago" },
     };
+  }
+  private async loadRecords() {
+    const rows = [];
+    for (let offset = 0; ; offset += 1000) {
+      const result = await supabase.from("activity_records").select("local_date,activity").eq("user_id", this.userId).order("local_date").order("activity").range(offset, offset + 999);
+      if (result.error) return { data: null, error: result.error };
+      rows.push(...result.data);
+      if (result.data.length < 1000) return { data: rows, error: null };
+    }
+  }
+  private async loadEntries() {
+    const rows = [];
+    for (let offset = 0; ; offset += 1000) {
+      const result = await supabase.from("entries").select("*").eq("user_id", this.userId).order("created_at", { ascending: false }).order("id").range(offset, offset + 999);
+      if (result.error) return { data: null, error: result.error };
+      rows.push(...result.data);
+      if (result.data.length < 1000) return { data: rows, error: null };
+    }
   }
   async setActivity(date: string, a: Activity, on: boolean) {
     offlineGuard();
@@ -130,7 +148,7 @@ export class CloudRepo implements Repo {
       { onConflict: "id", ignoreDuplicates: true },
     );
     if (error) throw error;
-    await this.setActivity(entry.local_date, entry.kind, true);
+    // The database trigger awards the point in the same transaction as the entry.
   }
   async editEntry(id: string, subtype: string | null, content: Record<string, unknown>) {
     offlineGuard();
@@ -150,9 +168,9 @@ export class CloudRepo implements Repo {
   /** One-time, non-destructive import of device data; duplicates are ignored. */
   async importGuest(g: RootedData) {
     offlineGuard();
-    const recs = Object.keys(g.records).map((k) => {
+    const recs = Object.keys(g.records).flatMap((k) => {
       const [local_date, activity] = k.split("|");
-      return { user_id: this.userId, local_date, activity };
+      return local_date && activity ? [{ user_id: this.userId, local_date, activity }] : [];
     });
     if (recs.length) {
       const { error } = await supabase

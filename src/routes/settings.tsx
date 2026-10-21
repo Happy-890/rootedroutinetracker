@@ -12,6 +12,8 @@ import { isValidTimeZone } from "@/lib/rooted/logic";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Settings — Rooted" },
       { name: "description", content: "Profile, timezone, backup and install options." },
       { property: "og:title", content: "Settings — Rooted" },
@@ -28,7 +30,7 @@ function SettingsPage() {
   useEffect(() => { setName(r.data.profile.display_name); setTz(r.data.profile.timezone); }, [r.data.profile]);
 
   async function saveProfile() {
-    if (!isValidTimeZone(tz)) return toast.error("Unknown timezone. Use a name like America/Chicago.");
+    if (!isValidTimeZone(tz)) { toast.error("Unknown timezone. Use a name like America/Chicago."); return; }
     if (await r.saveProfile({ display_name: name.trim(), timezone: tz })) toast.success("Profile saved");
     else toast.error(r.save.message ?? "Couldn't save");
   }

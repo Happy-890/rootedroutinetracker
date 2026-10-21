@@ -86,18 +86,22 @@ export function localDate(tz: string, now: Date = new Date()): string {
     month: "2-digit",
     day: "2-digit",
   }).formatToParts(now);
-  const get = (t: string) => parts.find((p) => p.type === t)!.value;
+  const get = (t: string) => {
+    const part = parts.find((p) => p.type === t);
+    if (!part) throw new Error("Couldn't determine the local date.");
+    return part.value;
+  };
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
 /** Calendar arithmetic on date strings (UTC-anchored, so no DST effects). */
 export function addDays(date: string, n: number): string {
-  const [y, m, d] = date.split("-").map(Number);
+  const [y = 2000, m = 1, d = 1] = date.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d + n));
   return dt.toISOString().slice(0, 10);
 }
 export function weekday(date: string): number {
-  const [y, m, d] = date.split("-").map(Number);
+  const [y = 2000, m = 1, d = 1] = date.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0=Sun
 }
 export function mondayOf(date: string): string {
@@ -147,7 +151,7 @@ export function pointsByDate(data: RootedData): Map<string, number> {
   const m = new Map<string, number>();
   for (const key of Object.keys(data.records)) {
     const [date, a] = key.split("|");
-    if (!(ALL_ACTIVITIES as readonly string[]).includes(a)) continue;
+    if (!date || !a || !(ALL_ACTIVITIES as readonly string[]).includes(a)) continue;
     m.set(date, Math.min(MAX_DAILY, (m.get(date) ?? 0) + 1));
   }
   return m;
@@ -164,7 +168,8 @@ export function totalPoints(data: RootedData): number {
 }
 
 export function pillarCount(data: RootedData, date: string, p: PillarId): number {
-  const pillar = PILLARS.find((x) => x.id === p)!;
+  const pillar = PILLARS.find((x) => x.id === p);
+  if (!pillar) return 0;
   return pillar.activities.filter((a) => isDone(data, date, a)).length;
 }
 
@@ -227,7 +232,7 @@ export function chart(data: RootedData, today: string, period: Period): { bars: 
     }
     return { bars, total: bars.reduce((a, b) => a + b.value, 0), caption: "Last 8 weeks" };
   }
-  const [ty, tm] = today.split("-").map(Number);
+  const [ty = 2000, tm = 1] = today.split("-").map(Number);
   const bars: Bar[] = [];
   for (let i = 5; i >= 0; i--) {
     const dt = new Date(Date.UTC(ty, tm - 1 - i, 1));
@@ -236,7 +241,7 @@ export function chart(data: RootedData, today: string, period: Period): { bars: 
     const days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
     const start = `${y}-${String(m + 1).padStart(2, "0")}-01`;
     bars.push({
-      label: MONTHS[m],
+      label: MONTHS[m] ?? "",
       value: sumRange(start, days),
       max: MAX_DAILY * days,
       current: i === 0,

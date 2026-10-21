@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRooted } from "@/lib/rooted/store";
+import { lovable } from "@/integrations/lovable";
 
 type View = "signin" | "signup" | "forgot";
 
@@ -16,6 +17,18 @@ export function AuthForm({ onDone }: { onDone?: () => void }) {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function social(provider: "google" | "apple" | "lovable") {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
+      if (result.error) throw result.error;
+      if (!result.redirected) onDone?.();
+    } catch (error) {
+      setMsg({ ok: false, text: error instanceof Error ? error.message : "Couldn't sign in. Please try again." });
+    } finally { setBusy(false); }
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -50,6 +63,12 @@ export function AuthForm({ onDone }: { onDone?: () => void }) {
 
   return (
     <form onSubmit={submit} className="space-y-3">
+      {view !== "forgot" && <div className="space-y-2">
+        <Button type="button" variant="secondary" className="w-full" disabled={busy} onClick={() => void social("apple")}>Continue with Apple</Button>
+        <Button type="button" variant="secondary" className="w-full" disabled={busy} onClick={() => void social("google")}>Continue with Google</Button>
+        <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => void social("lovable")}>Sign in with Lovable</Button>
+        <p className="text-center text-xs text-muted-foreground">or use email</p>
+      </div>}
       {view === "signup" && (
         <div className="space-y-1">
           <Label htmlFor="name">Display name</Label>
@@ -72,9 +91,9 @@ export function AuthForm({ onDone }: { onDone?: () => void }) {
         {view === "signin" ? "Sign in" : view === "signup" ? "Create account" : "Send reset link"}
       </Button>
       <div className="flex flex-wrap justify-between text-sm">
-        {view !== "signin" && <button type="button" className="min-h-11 text-primary" onClick={() => setView("signin")}>Have an account? Sign in</button>}
-        {view !== "signup" && <button type="button" className="min-h-11 text-primary" onClick={() => setView("signup")}>Create account</button>}
-        {view === "signin" && <button type="button" className="min-h-11 text-muted-foreground" onClick={() => setView("forgot")}>Forgot password?</button>}
+        {view !== "signin" && <Button variant="link" type="button" onClick={() => setView("signin")}>Have an account? Sign in</Button>}
+        {view !== "signup" && <Button variant="link" type="button" onClick={() => setView("signup")}>Create account</Button>}
+        {view === "signin" && <Button variant="link" type="button" onClick={() => setView("forgot")}>Forgot password?</Button>}
       </div>
     </form>
   );

@@ -61,9 +61,12 @@ export function RootedProvider({ children }: { children: ReactNode }) {
   const loadFrom = useCallback(async (repo: Repo) => {
     repoRef.current = repo;
     try {
-      setData(await repo.load());
+      const loaded = await repo.load();
+      if (repoRef.current !== repo) return;
+      setData(loaded);
       setDataError(null);
     } catch (e) {
+      if (repoRef.current !== repo) return;
       setDataError((e as Error).message || "Couldn't load your data.");
     }
   }, []);
@@ -74,6 +77,7 @@ export function RootedProvider({ children }: { children: ReactNode }) {
     const apply = (session: { user: { id: string; email?: string } } | null) => {
       if (!active) return;
       if (session) {
+        setData(emptyData());
         setUserId(session.user.id);
         setEmail(session.user.email ?? null);
         setMode("account");
@@ -84,16 +88,19 @@ export function RootedProvider({ children }: { children: ReactNode }) {
         setMode("guest");
         void loadFrom(new LocalRepo());
       } else {
+        repoRef.current = null;
         setUserId(null);
         setEmail(null);
         setData(emptyData());
         setMode("none");
       }
     };
-    supabase.auth.getSession().then(({ data }) => apply(data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") apply(session);
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        queueMicrotask(() => apply(session));
+      }
     });
+    supabase.auth.getUser().then(({ data }) => apply(data.user ? { user: data.user } : null)).catch(() => apply(null));
     return () => {
       active = false;
       sub.subscription.unsubscribe();
@@ -136,10 +143,10 @@ export function RootedProvider({ children }: { children: ReactNode }) {
       const key = `${today}|${a}`;
       if (pending.current.has(key)) return false; // double-tap guard
       pending.current.add(key);
-      const prev = data;
+      const previous = isDone(data, today, a);
       setData((d) => applyActivity(d, today, a, on));
       const ok = await run((r) => r.setActivity(today, a, on));
-      if (!ok) setData(prev);
+      if (!ok) setData((current) => applyActivity(current, today, a, previous));
       pending.current.delete(key);
       return ok;
     },
@@ -186,13 +193,19 @@ export function RootedProvider({ children }: { children: ReactNode }) {
   const startGuest = useCallback(() => {
     localStorage.setItem(MODE_KEY, "guest");
     setMode("guest");
+    setUserId(null);
+    setEmail(null);
     void loadFrom(new LocalRepo());
   }, [loadFrom]);
 
   const signOut = useCallback(async () => {
     localStorage.removeItem(MODE_KEY);
-    if (mode === "account") await supabase.auth.signOut();
+    if (mode === "account") {
+      const { error } = await supabase.auth.signOut();
+      if (error) { setSave({ kind: "error", message: error.message }); return; }
+    }
     else {
+      repoRef.current = null;
       setMode("none");
       setData(emptyData());
     }

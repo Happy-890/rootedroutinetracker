@@ -7,11 +7,14 @@ import {
   ACTIVITY_LABEL, MAX_DAILY, PILLARS, chart, dayPoints, isDone, pillarCount, totalPoints,
   type Activity, type Period, type PillarId,
 } from "@/lib/rooted/logic";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Rooted — Build what matters, daily" },
       { name: "description", content: "Track Faith, Family, Fitness and Finance habits daily with Rooted." },
       { property: "og:title", content: "Rooted — Build what matters, daily" },
@@ -112,7 +115,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function PillarCard({ id }: { id: PillarId }) {
   const { data, today, toggle } = useRooted();
-  const p = PILLARS.find((x) => x.id === id)!;
+  const p = PILLARS.find((x) => x.id === id);
+  if (!p) return null;
   const count = pillarCount(data, today, id);
   const full = count === 2;
   const { icon: Icon, color } = ICONS[id];
@@ -134,19 +138,19 @@ function PillarCard({ id }: { id: PillarId }) {
               search={{ tab: a as "learn" | "plan" }}
               className={activityClass(isDone(data, today, a))}
             >
-              <span className="min-w-0 truncate">{ACTIVITY_LABEL[a]}</span>
+              <span className="min-w-0 whitespace-normal">{ACTIVITY_LABEL[a]}</span>
               {isDone(data, today, a) ? <Check className="size-5 shrink-0" strokeWidth={3} /> : <ChevronRight className="size-5 shrink-0" />}
             </Link>
           ) : (
-            <button
+            <Button variant="ghost"
               key={a}
               aria-pressed={isDone(data, today, a)}
               onClick={() => void toggle(a as Activity)}
               className={activityClass(isDone(data, today, a))}
             >
-              <span className="min-w-0 truncate">{ACTIVITY_LABEL[a]}</span>
+              <span className="min-w-0 whitespace-normal">{ACTIVITY_LABEL[a]}</span>
               {isDone(data, today, a) ? <Check className="size-5 shrink-0" strokeWidth={3} /> : <span className="size-5 shrink-0 rounded-md border-2 border-muted-foreground/50" />}
-            </button>
+            </Button>
           ),
         )}
       </div>
@@ -156,7 +160,7 @@ function PillarCard({ id }: { id: PillarId }) {
 
 function activityClass(done: boolean) {
   return cn(
-    "flex min-h-11 w-full items-center justify-between gap-1 rounded-xl px-3 text-left text-sm font-bold transition-all active:scale-[0.98]",
+    "flex h-auto min-h-11 w-full items-center justify-between gap-1 rounded-xl px-3 text-left text-sm font-bold transition-all active:scale-[0.98]",
     done ? "bg-gold-gradient text-primary-foreground" : "bg-surface",
   );
 }
