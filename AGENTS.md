@@ -12,3 +12,5 @@
 - Keep RootedProvider and the single toast host in the root shell so all content routes share account state.
 - Keep scoring and local calendar arithmetic in the pure Rooted logic module so rules are independently testable.
 - Use the managed Lovable OAuth helper for social sign-in so preview and published login share the supported flow.
+- Entry inserts award their activity via a database trigger in one transaction; do not reintroduce a second award write.
+- Offline shell uses generated Workbox with a guarded single registrar; never cache auth, API or private account responses.

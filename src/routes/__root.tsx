@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { RootedProvider } from "@/lib/rooted/store";
 import { Toaster } from "@/components/ui/sonner";
+import { registerRootedOffline } from "@/lib/rooted/pwa";
 
 function NotFoundComponent() {
   return (
@@ -121,6 +122,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => { void registerRootedOffline().catch(() => undefined); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
