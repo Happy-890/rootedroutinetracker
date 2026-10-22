@@ -76,7 +76,7 @@ function ProgressCard() {
       </div>
       <div className="mt-3 grid grid-cols-3 divide-x divide-border rounded-xl bg-surface py-2 text-center">
         <Stat label="Today" value={`${todayPts}/${MAX_DAILY}`} />
-        <Stat label={c.caption} value={String(c.total)} />
+        <Stat label={c.caption.replace(/\s*\(.*\)/, "")} value={String(c.total)} />
         <Stat label="All-time" value={`${totalPoints(data)} P`} />
       </div>
       <div
