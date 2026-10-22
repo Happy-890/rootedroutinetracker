@@ -55,7 +55,7 @@ function Activity() {
     <ul className="space-y-2">
       {dates.map((d) => (
         <li key={d} className="rounded-2xl bg-card p-3">
-          <div className="flex justify-between font-bold"><span>{d}</span><span className="text-teal">{dayPoints(data, d)}/10</span></div>
+          <div className="flex justify-between font-bold"><span>{shortDate(d)}</span><span className="text-teal">{dayPoints(data, d)}/10</span></div>
           <p className="mt-1 text-sm text-muted-foreground">{ALL_ACTIVITIES.filter((a) => data.records[`${d}|${a}`]).map((a) => ACTIVITY_LABEL[a]).join(" · ")}</p>
         </li>
       ))}
@@ -73,12 +73,12 @@ function Archives({ kind, setKind }: { kind: Search["kind"]; setKind: (k: Search
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   return (
     <div>
-      <div className="grid grid-cols-3 gap-2">
-        <select aria-label="Type" value={kind} onChange={(e) => setKind(e.target.value as Search["kind"])} className="h-11 rounded-xl border bg-card px-2">
+      <div className="grid grid-cols-2 gap-2">
+        <select aria-label="Type" value={kind} onChange={(e) => setKind(e.target.value as Search["kind"])} className="col-span-2 h-11 rounded-lg border bg-card px-2">
           <option value="all">All</option><option value="learn">Learn</option><option value="gratitude">Gratitude</option><option value="journal">Journal</option>
         </select>
-        <input aria-label="From date" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-11 min-w-0 rounded-xl border bg-card px-2" />
-        <input aria-label="To date" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-11 min-w-0 rounded-xl border bg-card px-2" />
+        <input aria-label="From date" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-11 w-full min-w-0 rounded-lg border bg-card px-2 text-sm" />
+        <input aria-label="To date" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-11 w-full min-w-0 rounded-lg border bg-card px-2 text-sm" />
       </div>
       {list.length === 0 ? <p className="mt-4 rounded-3xl bg-card p-6 text-center text-muted-foreground">No entries found.</p> : (
         <ul className="mt-3 space-y-2">{list.map((e) => <EntryItem key={e.id} e={e} />)}</ul>
@@ -109,8 +109,8 @@ function EntryItem({ e }: { e: Entry }) {
   return (
     <li className="rounded-2xl bg-card p-3">
       <button className="flex min-h-11 w-full items-center justify-between text-left" onClick={() => setOpen(!open)} aria-expanded={open}>
-        <span className="font-bold">{title}</span>
-        <span className="text-xs text-muted-foreground">{e.local_date} · {new Date(e.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
+        <span className="min-w-0 truncate font-bold">{title}</span>
+        <span className="shrink-0 pl-2 text-xs text-muted-foreground">{shortDate(e.local_date)} · {new Date(e.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
       </button>
       {!open && <p className="line-clamp-2 text-sm text-muted-foreground">{f[0]?.value}</p>}
       {open && (
@@ -129,4 +129,9 @@ function EntryItem({ e }: { e: Entry }) {
       )}
     </li>
   );
+}
+
+function shortDate(d: string) {
+  const [, m, day] = d.split("-");
+  return m && day ? `${Number(m)}/${Number(day)}` : d;
 }

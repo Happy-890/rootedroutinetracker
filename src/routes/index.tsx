@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, ChartColumnIncreasing, ChevronRight, Cross, Dumbbell, NotebookPen, Sparkles, Users } from "lucide-react";
 import { useState } from "react";
-import { Shell, SaveStatus } from "@/components/rooted/Shell";
+import { Shell } from "@/components/rooted/Shell";
 import { useRooted } from "@/lib/rooted/store";
 import {
   ACTIVITY_LABEL, MAX_DAILY, PILLARS, chart, dayPoints, isDone, pillarCount, totalPoints,
@@ -37,7 +37,6 @@ function Home() {
       <ProgressCard />
       <div className="mt-5 flex items-baseline justify-between">
         <h2 className="text-base font-extrabold">4 Pillars</h2>
-        <SaveStatus />
       </div>
       <div className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-3">
         {PILLARS.map((p) => <PillarCard key={p.id} id={p.id} />)}
@@ -89,7 +88,7 @@ function ProgressCard() {
             <span className="text-[10px] font-bold text-muted-foreground">{b.value || ""}</span>
             <div className="flex w-full flex-1 items-end overflow-hidden rounded-md bg-surface">
               <div
-                className={cn("w-full rounded-md", b.current ? "bg-gold-gradient" : "bg-teal")}
+                className={cn("w-full rounded-md transition-[height] duration-500 ease-out motion-reduce:transition-none", b.current ? "bg-gold-gradient" : "bg-teal")}
                 style={{ height: `${(b.value / scaleMax) * 100}%` }}
               />
             </div>
@@ -97,9 +96,6 @@ function ProgressCard() {
           </div>
         ))}
       </div>
-      <p className="mt-1.5 text-[11px] text-muted-foreground">
-        {period === "daily" ? `Daily max ${MAX_DAILY} points` : `Bars scaled to highest period · max possible ${top} per bar`}
-      </p>
     </section>
   );
 }
@@ -177,13 +173,10 @@ function BonusButton({ to, activity, label, icon: Icon }: { to: "/gratitude" | "
   const { data, today } = useRooted();
   const done = isDone(data, today, activity);
   return (
-    <Link to={to} className={cn("flex flex-col justify-center rounded-2xl p-3", done ? "bg-gold-gradient text-primary-foreground" : "bg-card")}>
-      <div className="flex items-center justify-between">
-        <Icon className={cn("size-5", !done && "text-primary")} />
-        {done && <Check className="size-5" strokeWidth={3} />}
-      </div>
-      <span className="mt-1 text-sm font-extrabold">{label}</span>
-      <span className="text-[11px] opacity-80">{done ? "+1 earned today" : "+1 point"}</span>
+    <Link to={to} className={cn("flex min-h-11 items-center gap-2 rounded-lg px-3", done ? "bg-gold-gradient text-primary-foreground" : "bg-card")}>
+      <Icon className={cn("size-[18px] shrink-0", !done && "text-primary")} />
+      <span className="flex-1 truncate text-sm font-extrabold">{label}</span>
+      {done && <Check className="size-4 shrink-0" strokeWidth={3} />}
     </Link>
   );
 }
