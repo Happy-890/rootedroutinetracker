@@ -30,7 +30,7 @@ function Finance() {
   const { tab } = Route.useSearch();
   return (
     <Shell back title="Finance">
-      <div className="grid grid-cols-2 gap-1 rounded-2xl bg-card p-1" role="tablist">
+      <div className="grid grid-cols-2 gap-1 rounded-xl bg-card p-1" role="tablist">
         {(["learn", "plan"] as const).map((t) => (
           <Link
             key={t}
@@ -39,7 +39,7 @@ function Finance() {
             replace
             role="tab"
             aria-selected={tab === t}
-            className={cn("flex min-h-11 items-center justify-center rounded-xl font-bold", tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground")}
+            className={cn("flex h-9 items-center justify-center rounded-lg text-sm font-bold", tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground")}
           >
             {t === "learn" ? "Learn" : "Plan"}
           </Link>
@@ -72,9 +72,9 @@ function Learn() {
   }
 
   return (
-    <div className="space-y-3 rounded-3xl bg-card p-4">
-      <label htmlFor="learn" className="text-lg font-extrabold">What have you learned?</label>
-      <Textarea id="learn" placeholder="Write your text here" rows={7} value={text} onChange={(e) => setText(e.target.value)} aria-invalid={!!err} className="bg-surface" />
+    <div className="space-y-3 rounded-2xl bg-card p-3.5">
+      <label htmlFor="learn" className="text-base font-extrabold">What have you learned?</label>
+      <Textarea id="learn" placeholder="Write your text here" rows={5} value={text} onChange={(e) => setText(e.target.value)} aria-invalid={!!err} className="bg-surface" />
       {err && <p className="text-sm text-destructive">{err}</p>}
       {done && <p className="text-sm text-teal">Learn point earned today. More entries are welcome.</p>}
       <SaveStatus />
@@ -112,23 +112,23 @@ function Plan() {
       aria-checked={on}
       disabled={done}
       onClick={() => setChecks({ ...state, [k]: !on })}
-      className={cn("flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 text-left font-bold", on ? "bg-gold-soft" : "bg-surface")}
+      className={cn("flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold", on ? "bg-gold-soft" : "bg-surface")}
     >
-      <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-md border-2", on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/60")}>
-        {on && <Check className="size-4" strokeWidth={3} />}
+      <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-full border-[1.5px]", on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/60")}>
+        {on && <Check className="size-3" strokeWidth={3.5} />}
       </span>
       {label}
     </button>
   );
 
   return (
-    <div className="space-y-3 rounded-3xl bg-card p-4">
-      <h2 className="text-lg font-extrabold">Plan your day</h2>
+    <div className="space-y-3 rounded-2xl bg-card p-3.5">
+      <h2 className="text-base font-extrabold">Plan your day</h2>
       <Row k="cal" label="Review your calendar for the day." on={cal} />
       <Row k="quests" label="Review all your quests." on={quests} />
       <SaveStatus />
       {done ? (
-        <p className="rounded-2xl bg-gold-soft p-3 text-center font-bold text-primary">Plan complete for today ✓</p>
+        <p className="rounded-xl bg-gold-soft p-2.5 text-center text-sm font-bold text-primary">Plan complete for today ✓</p>
       ) : (
         <Button className="w-full" disabled={!(cal && quests) || busy} onClick={finish}>Done</Button>
       )}

@@ -24,41 +24,41 @@ export function Shell({ children, title, back }: { children: ReactNode; title?: 
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col">
-      <header className="pt-safe sticky top-0 z-20 bg-background/95 px-4 pb-3 backdrop-blur">
+      <header className="pt-safe sticky top-0 z-20 bg-background/95 px-4 pb-2.5 backdrop-blur">
         {back ? (
           <div className="flex items-center gap-2">
             <button
               onClick={() => (window.history.length > 1 ? router.history.back() : router.navigate({ to: "/" }))}
-              className="flex size-11 items-center justify-center rounded-xl bg-card"
+              className="-ml-1.5 flex size-11 items-center justify-center rounded-full"
               aria-label="Back"
             >
               <ArrowLeft className="size-5" />
             </button>
-            <h1 className="text-xl font-extrabold">{title}</h1>
+            <h1 className="text-lg font-extrabold">{title}</h1>
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2">
             <Link to="/" className="flex min-w-0 items-center gap-2">
-              <img src={logo} alt="" width={40} height={40} className="size-10 rounded-xl" />
+              <img src={logo} alt="" width={34} height={34} className="size-[34px] rounded-lg" />
               <div className="min-w-0">
-                <div className="text-lg font-extrabold leading-tight">Rooted</div>
+                <div className="text-base font-extrabold leading-tight">Rooted</div>
                 <div className="truncate text-xs text-muted-foreground">Hi, {name}</div>
               </div>
             </Link>
-            <div className="flex shrink-0 items-center gap-2">
-              <div className="rounded-full bg-card px-3 py-1.5 text-sm font-bold" aria-label={`${totalPoints(data)} total points`}>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <div className="rounded-full bg-card px-2.5 py-1 text-xs font-bold" aria-label={`${totalPoints(data)} total points`}>
                 <span className="text-primary">{totalPoints(data)}</span> P
               </div>
-              <div className="flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-sm font-bold" aria-label={`${streak(data, today)} day streak`}>
-                <Flame className="size-4 text-coral" /> {streak(data, today)}
+              <div className="flex items-center gap-1 rounded-full bg-card px-2.5 py-1 text-xs font-bold" aria-label={`${streak(data, today)} day streak`}>
+                <Flame className="size-3.5 text-coral" /> {streak(data, today)}
               </div>
             </div>
           </div>
         )}
         {mode === "guest" && (
-          <p className="mt-2 rounded-lg bg-gold-soft px-3 py-1.5 text-xs text-primary">
-            Guest mode — saved on this device only, not backed up.{" "}
-            <Link to="/settings" className="font-bold underline">Create account</Link>
+          <p className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-gold-soft px-2.5 py-1 text-[11px] text-primary">
+            <span className="truncate">Guest — saved on this device only</span>
+            <Link to="/settings" className="shrink-0 font-bold underline">Create account</Link>
           </p>
         )}
         {dataError && (
@@ -68,7 +68,7 @@ export function Shell({ children, title, back }: { children: ReactNode; title?: 
           </div>
         )}
       </header>
-      <main className="flex-1 px-4 pb-28">{children}</main>
+      <main className="flex-1 px-4 pb-24">{children}</main>
       <BottomNav />
     </div>
   );
@@ -88,10 +88,10 @@ function BottomNav() {
             key={to}
             to={to}
             activeOptions={{ exact: to === "/" }}
-            className="flex min-h-14 min-w-20 flex-col items-center justify-center gap-0.5 text-xs font-bold text-muted-foreground"
+            className="flex min-h-12 min-w-20 flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-muted-foreground"
             activeProps={{ className: "text-primary" }}
           >
-            <Icon className="size-6" />
+            <Icon className="size-5" />
             {label}
           </Link>
         ))}
