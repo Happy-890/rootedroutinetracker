@@ -93,7 +93,7 @@ function Journal() {
             <Textarea
               id="je"
               placeholder="Write your text here"
-              rows={10}
+              rows={8}
               value={type === "freeflow" ? free : dev}
               onChange={(e) => (type === "freeflow" ? setFree : setDev)(e.target.value)}
               aria-invalid={tried && !(type === "freeflow" ? free : dev).trim()}
