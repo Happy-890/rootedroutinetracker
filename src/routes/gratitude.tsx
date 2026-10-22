@@ -44,8 +44,8 @@ function Gratitude() {
 
   return (
     <Shell back title="Gratitude">
-      <div className="space-y-3 rounded-3xl bg-card p-4">
-        <h2 className="text-lg font-extrabold">Write 3 things that you are grateful for.</h2>
+      <div className="space-y-3 rounded-2xl bg-card p-3.5">
+        <h2 className="text-base font-extrabold">Write 3 things that you are grateful for.</h2>
         {items.map((v, i) => (
           <div key={i}>
             <label htmlFor={`g${i}`} className="text-sm font-bold text-muted-foreground">{i + 1}.</label>

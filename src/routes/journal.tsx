@@ -62,26 +62,26 @@ function Journal() {
   return (
     <Shell back title="Journal">
       <h2 className="mb-2 text-sm font-bold text-muted-foreground">Select Type</h2>
-      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-card p-1" role="tablist">
+      <div className="grid grid-cols-3 gap-1 rounded-xl bg-card p-1" role="tablist">
         {(Object.keys(JOURNAL_LABEL) as JournalType[]).map((t) => (
           <button
             key={t}
             role="tab"
             aria-selected={type === t}
             onClick={() => { setType(t); setTried(false); }}
-            className={cn("min-h-11 whitespace-nowrap rounded-xl px-1 text-sm font-bold", type === t ? "bg-primary text-primary-foreground" : "text-muted-foreground")}
+            className={cn("h-9 whitespace-nowrap rounded-lg px-1 text-[13px] font-bold", type === t ? "bg-primary text-primary-foreground" : "text-muted-foreground")}
           >
             {JOURNAL_LABEL[t]}
           </button>
         ))}
       </div>
-      <div className="mt-4 space-y-3 rounded-3xl bg-card p-4">
+      <div className="mt-4 space-y-3 rounded-2xl bg-card p-3.5">
         {type === "reframe" ? (
           REFRAME_PROMPTS.map((q, i) => {
             const bad = tried && (rf[i] ?? "").trim().length < MIN_ANSWER;
             return (
               <div key={i}>
-                <label htmlFor={`rf${i}`} className="font-bold">{i + 1}. {q}</label>
+                <label htmlFor={`rf${i}`} className="text-sm font-bold">{i + 1}. {q}</label>
                 <Textarea id={`rf${i}`} placeholder="Write your text here" rows={3} value={rf[i] ?? ""} aria-invalid={bad} onChange={(e) => setRf(rf.map((x, j) => (j === i ? e.target.value : x)))} className="mt-1 bg-surface" />
                 {bad && <p className="text-sm text-destructive">Please write an answer.</p>}
               </div>
@@ -89,11 +89,11 @@ function Journal() {
           })
         ) : (
           <div>
-            <label htmlFor="je" className="font-bold">Journal Entry</label>
+            <label htmlFor="je" className="text-sm font-bold">Journal Entry</label>
             <Textarea
               id="je"
               placeholder="Write your text here"
-              rows={10}
+              rows={8}
               value={type === "freeflow" ? free : dev}
               onChange={(e) => (type === "freeflow" ? setFree : setDev)(e.target.value)}
               aria-invalid={tried && !(type === "freeflow" ? free : dev).trim()}
