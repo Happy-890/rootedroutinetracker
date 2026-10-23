@@ -37,6 +37,7 @@ export type Database = {
       }
       entries: {
         Row: {
+          archived_import: boolean
           content: Json
           created_at: string
           id: string
@@ -47,6 +48,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived_import?: boolean
           content?: Json
           created_at?: string
           id: string
@@ -57,6 +59,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archived_import?: boolean
           content?: Json
           created_at?: string
           id?: string
@@ -92,12 +95,103 @@ export type Database = {
         }
         Relationships: []
       }
+      push_devices: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_sent_date: string | null
+          last_test_at: string | null
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_sent_date?: string | null
+          last_test_at?: string | null
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_sent_date?: string | null
+          last_test_at?: string | null
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_signing_config: {
+        Row: {
+          encrypted_private_key: string
+          id: boolean
+          iv: string
+          public_key: string
+        }
+        Insert: {
+          encrypted_private_key: string
+          id?: boolean
+          iv: string
+          public_key: string
+        }
+        Update: {
+          encrypted_private_key?: string
+          id?: boolean
+          iv?: string
+          public_key?: string
+        }
+        Relationships: []
+      }
+      reminder_preferences: {
+        Row: {
+          delivery_time: string
+          enabled: boolean
+          message: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          delivery_time?: string
+          enabled?: boolean
+          message?: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          delivery_time?: string
+          enabled?: boolean
+          message?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_rooted_reminders: {
+        Args: never
+        Returns: {
+          auth: string
+          device_id: string
+          endpoint: string
+          message: string
+          p256dh: string
+        }[]
+      }
+      rooted_scoring_date: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

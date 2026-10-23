@@ -1,4 +1,8 @@
 # Rooted completion
+- [ ] Enforce Central-time midnight cutoff in account and guest writes, including imports; verify backdate/future rejection.
+- [ ] Add Light/Dark/Device appearance choices.
+- [ ] Add private Web Push reminder preferences, device permission controls, test delivery and scheduled delivery.
+- [ ] Verify new settings and rules; phone push receipt requires installed published app and permission.
 - [x] Repair rendering and strict typing; latest automatic check is clean.
 - [x] Connect Google, Apple and Lovable sign-in; validate recovery-page guard.
 - [x] Test scoring, streaks and guest persistence: 16 tests plus full browser forms/history/settings flow.
