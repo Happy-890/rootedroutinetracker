@@ -78,6 +78,33 @@
   input, textarea, select { font-size: 16px; } /* prevents iOS zoom */
 }
 
+:root[data-theme="light"] {
+  color-scheme: light;
+  --background: oklch(0.98 0 0);
+  --foreground: oklch(0.24 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0 0);
+  --surface: oklch(0.94 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0 0);
+  --secondary: oklch(0.93 0 0);
+  --secondary-foreground: oklch(0.24 0 0);
+  --muted: oklch(0.94 0 0);
+  --muted-foreground: oklch(0.48 0 0);
+  --accent: oklch(0.92 0 0);
+  --accent-foreground: oklch(0.24 0 0);
+  --border: oklch(0.86 0 0);
+  --input: oklch(0.8 0 0);
+  --primary: oklch(0.72 0.12 85);
+  --primary-foreground: oklch(0.2 0.02 85);
+  --teal: oklch(0.5 0.1 180);
+  --coral: oklch(0.56 0.15 32);
+  --cyan: oklch(0.52 0.1 215);
+  --gold: oklch(0.56 0.1 85);
+  --success: oklch(0.5 0.1 180);
+}
+:root:not([data-theme="light"]) { color-scheme: dark; }
+
 @utility bg-gold-gradient { background-image: var(--gradient-gold); }
 @utility pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem); }
 @utility pt-safe { padding-top: calc(env(safe-area-inset-top) + 0.75rem); }

@@ -62,6 +62,17 @@ export interface RootedData {
 
 export const DEFAULT_TZ = "America/Chicago";
 
+/** Scoring is always Central time, independent of reminder timezone. */
+export const scoringDate = (now: Date = new Date()) => localDate(DEFAULT_TZ, now);
+export function assertOpenScoringDate(date: string, now: Date = new Date()) {
+  if (date !== scoringDate(now)) throw new Error("This scoring day is closed. No catch-up after midnight Central time.");
+}
+
+export function reminderDue(timezone: string, deliveryTime: string, lastSent: string | null, now: Date): boolean {
+  const time = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(now);
+  return time === deliveryTime && lastSent !== localDate(timezone, now);
+}
+
 export function emptyData(): RootedData {
   return { records: {}, entries: [], profile: { display_name: "", timezone: DEFAULT_TZ } };
 }

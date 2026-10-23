@@ -9,6 +9,8 @@ import {
   applyNewEntry,
   emptyData,
   recordKey,
+  assertOpenScoringDate,
+  scoringDate,
 } from "./logic";
 
 export interface Repo {
@@ -47,9 +49,11 @@ export class LocalRepo implements Repo {
     return this.read();
   }
   async setActivity(date: string, a: Activity, on: boolean) {
+    assertOpenScoringDate(date);
     this.write(applyActivity(this.read(), date, a, on));
   }
   async createEntry(entry: Entry) {
+    assertOpenScoringDate(entry.local_date);
     this.write(applyNewEntry(this.read(), entry));
   }
   async editEntry(id: string, subtype: string | null, content: Record<string, unknown>) {
@@ -168,9 +172,10 @@ export class CloudRepo implements Repo {
   /** One-time, non-destructive import of device data; duplicates are ignored. */
   async importGuest(g: RootedData) {
     offlineGuard();
+    const today = scoringDate();
     const recs = Object.keys(g.records).flatMap((k) => {
       const [local_date, activity] = k.split("|");
-      return local_date && activity ? [{ user_id: this.userId, local_date, activity }] : [];
+      return local_date === today && activity ? [{ user_id: this.userId, local_date, activity }] : [];
     });
     if (recs.length) {
       const { error } = await supabase
@@ -180,7 +185,7 @@ export class CloudRepo implements Repo {
     }
     if (g.entries.length) {
       const { error } = await supabase.from("entries").upsert(
-        g.entries.map((e) => ({
+        g.entries.filter((e) => e.local_date <= today).map((e) => ({
           id: e.id,
           user_id: this.userId,
           kind: e.kind,
@@ -188,6 +193,7 @@ export class CloudRepo implements Repo {
           content: e.content as never,
           local_date: e.local_date,
           created_at: e.created_at,
+          archived_import: e.local_date !== today,
         })),
         { onConflict: "id", ignoreDuplicates: true },
       );

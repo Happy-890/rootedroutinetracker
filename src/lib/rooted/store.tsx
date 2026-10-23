@@ -11,7 +11,7 @@ import {
   applyNewEntry,
   emptyData,
   isDone,
-  localDate,
+  scoringDate,
   newId,
 } from "./logic";
 import { CloudRepo, GUEST_KEY, LocalRepo, readGuest, type Repo } from "./repo";
@@ -56,7 +56,7 @@ export function RootedProvider({ children }: { children: ReactNode }) {
   const repoRef = useRef<Repo | null>(null);
   const pending = useRef(new Set<string>());
 
-  const today = localDate(data.profile.timezone, now);
+  const today = scoringDate(now);
 
   const loadFrom = useCallback(async (repo: Repo) => {
     repoRef.current = repo;
@@ -140,13 +140,14 @@ export function RootedProvider({ children }: { children: ReactNode }) {
 
   const setActivity = useCallback(
     async (a: Activity, on: boolean) => {
-      const key = `${today}|${a}`;
+      const date = scoringDate();
+      const key = `${date}|${a}`;
       if (pending.current.has(key)) return false; // double-tap guard
       pending.current.add(key);
-      const previous = isDone(data, today, a);
-      setData((d) => applyActivity(d, today, a, on));
-      const ok = await run((r) => r.setActivity(today, a, on));
-      if (!ok) setData((current) => applyActivity(current, today, a, previous));
+      const previous = isDone(data, date, a);
+      setData((d) => applyActivity(d, date, a, on));
+      const ok = await run((r) => r.setActivity(date, a, on));
+      if (!ok) setData((current) => applyActivity(current, date, a, previous));
       pending.current.delete(key);
       return ok;
     },
@@ -163,7 +164,7 @@ export function RootedProvider({ children }: { children: ReactNode }) {
       if (pending.current.has(key)) return false;
       pending.current.add(key);
       const ts = new Date().toISOString();
-      const entry: Entry = { id: newId(), kind, subtype, content, local_date: today, created_at: ts, updated_at: ts };
+      const entry: Entry = { id: newId(), kind, subtype, content, local_date: scoringDate(), created_at: ts, updated_at: ts };
       const ok = await run((r) => r.createEntry(entry));
       if (ok) setData((d) => applyNewEntry(d, entry));
       pending.current.delete(key);

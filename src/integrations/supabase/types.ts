@@ -128,6 +128,27 @@ export type Database = {
         }
         Relationships: []
       }
+      push_signing_config: {
+        Row: {
+          encrypted_private_key: string
+          id: boolean
+          iv: string
+          public_key: string
+        }
+        Insert: {
+          encrypted_private_key: string
+          id?: boolean
+          iv: string
+          public_key: string
+        }
+        Update: {
+          encrypted_private_key?: string
+          id?: boolean
+          iv?: string
+          public_key?: string
+        }
+        Relationships: []
+      }
       reminder_preferences: {
         Row: {
           delivery_time: string
