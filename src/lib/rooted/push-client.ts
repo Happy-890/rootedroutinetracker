@@ -2,7 +2,8 @@ import { registerDevice, removeDevice, notificationKey } from "./reminders.funct
 
 export async function deviceSubscription() {
   if (!("serviceWorker" in navigator)) return null;
-  const registration = await navigator.serviceWorker.getRegistration("/notifications/");
+  // iOS requires the push worker at root scope; check root first, then the legacy scope.
+  const registration = await navigator.serviceWorker.getRegistration("/") ?? await navigator.serviceWorker.getRegistration("/notifications/");
   return registration?.pushManager.getSubscription() ?? null;
 }
 export async function enableDevice() {
@@ -12,7 +13,10 @@ export async function enableDevice() {
   if (permission !== "granted") throw new Error("Notifications are blocked. Allow Rooted notifications in your device settings.");
   const { publicKey } = await notificationKey();
   const bytes = Uint8Array.from(atob(publicKey.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
-  const registration = await navigator.serviceWorker.register("/rooted-push-worker.js", { scope: "/notifications/" });
+  // Unregister the legacy scoped worker so only the root-scope worker remains.
+  const legacy = await navigator.serviceWorker.getRegistration("/notifications/");
+  if (legacy) await legacy.unregister();
+  const registration = await navigator.serviceWorker.register("/rooted-push-worker.js", { scope: "/" });
   if (!registration.active) await new Promise<void>((resolve, reject) => {
     const worker = registration.installing ?? registration.waiting;
     if (!worker) { reject(new Error("Couldn't enable notifications. Try again.")); return; }
