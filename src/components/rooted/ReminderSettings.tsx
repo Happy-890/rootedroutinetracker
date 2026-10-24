@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useRooted } from "@/lib/rooted/store";
-import { loadReminders, saveReminders, testReminder } from "@/lib/rooted/reminders.functions";
+import { loadReminders, saveReminders, testReminder, loadEventLog } from "@/lib/rooted/reminders.functions";
 import { deviceSubscription, enableDevice, disableDevice } from "@/lib/rooted/push-client";
 
 export function ReminderSettings() {
@@ -53,6 +53,26 @@ export function ReminderSettings() {
         })}>Send test</Button>
       </div>
       <p className="text-xs text-muted-foreground">On iPhone, notifications require iOS 16.4 or later and Rooted added to your Home Screen. Delivery depends on your connection and device settings.</p>
+      <EventLog />
     </>}
   </section>;
+}
+type LogRow = { id: string; event: string; level: string; detail: string | null; created_at: string };
+function EventLog() {
+  const [rows, setRows] = useState<LogRow[] | null>(null);
+  const [open, setOpen] = useState(false);
+  async function refresh() {
+    try { setRows(await loadEventLog()); } catch { toast.error("Couldn't load the activity log."); }
+  }
+  return <details className="rounded-lg border border-border p-3 text-sm" open={open} onToggle={e => { const o = (e.target as HTMLDetailsElement).open; setOpen(o); if (o) void refresh(); }}>
+    <summary className="cursor-pointer font-semibold">Delivery log</summary>
+    <div className="mt-2 space-y-2">
+      <Button variant="outline" size="sm" onClick={() => void refresh()}>Refresh</Button>
+      {rows === null ? <p className="text-muted-foreground">Loading…</p> : rows.length === 0 ? <p className="text-muted-foreground">No events yet.</p> :
+        <ul className="space-y-2">{rows.map(row => <li key={row.id} className="border-t border-border pt-2">
+          <div className="flex justify-between gap-2"><span className={row.level === "error" ? "font-semibold text-destructive" : "font-semibold"}>{row.event}</span><span className="shrink-0 text-xs text-muted-foreground">{new Date(row.created_at).toLocaleString([], { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })}</span></div>
+          {row.detail && <p className="break-all text-xs text-muted-foreground">{row.detail.split("\n")[0]}</p>}
+        </li>)}</ul>}
+    </div>
+  </details>;
 }
