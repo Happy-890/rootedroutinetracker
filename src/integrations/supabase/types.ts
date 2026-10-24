@@ -35,6 +35,33 @@ export type Database = {
         }
         Relationships: []
       }
+      app_event_logs: {
+        Row: {
+          created_at: string
+          detail: string | null
+          event: string
+          id: string
+          level: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          event: string
+          id?: string
+          level?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          event?: string
+          id?: string
+          level?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       entries: {
         Row: {
           archived_import: boolean
