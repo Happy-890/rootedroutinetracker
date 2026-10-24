@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireVerifiedAuth } from "./auth.server";
 import { z } from "zod";
 import { reminderSchema, subscriptionSchema } from "./push-validation";
 
