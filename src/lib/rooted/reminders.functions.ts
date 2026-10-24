@@ -36,8 +36,21 @@ export const testReminder = createServerFn({ method: "POST" }).middleware([requi
   if (claimed.error || !claimed.data?.length) throw new Error("Wait one minute before sending another test.");
   const preferences = await context.supabase.from("reminder_preferences").select("message").eq("user_id", context.userId).maybeSingle();
   const { sendPush } = await import("./push.server");
-  const result = await sendPush(device.data, preferences.data?.message ?? "Build what matters, daily.");
+  const { logEvent } = await import("./log.server");
+  let result;
+  try {
+    result = await sendPush(device.data, preferences.data?.message ?? "Build what matters, daily.");
+  } catch (error) {
+    await logEvent(context.userId, "Test notification failed", "error", error);
+    throw new Error("Couldn't deliver the notification. Try enabling this device again.");
+  }
   if (result.expired) await context.supabase.from("push_devices").delete().eq("id", device.data.id);
+  await logEvent(context.userId, result.ok ? "Test notification sent" : "Test notification rejected", result.ok ? "info" : "error", `${result.host} responded ${result.status}`);
   if (!result.ok) throw new Error("Couldn't deliver the notification. Try enabling this device again.");
   return { ok: true };
+});
+export const loadEventLog = createServerFn({ method: "GET" }).middleware([requireVerifiedAuth]).handler(async ({ context }) => {
+  const result = await context.supabase.from("app_event_logs").select("id,event,level,detail,created_at").eq("user_id", context.userId).order("created_at", { ascending: false }).limit(30);
+  if (result.error) throw new Error("Couldn't load the activity log.");
+  return result.data;
 });
