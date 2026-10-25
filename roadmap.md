@@ -1,13 +1,7 @@
 # Rooted completion
-- [ ] Polish Settings and add multiple titled reminders; verify signed-in editing, ownership and delivery payloads.
-- [ ] Enforce Central-time midnight cutoff in account and guest writes, including imports; verify backdate/future rejection.
-- [ ] Add Light/Dark/Device appearance choices.
-- [ ] Add private Web Push reminder preferences, device permission controls, test delivery and scheduled delivery.
-- [ ] Verify new settings and rules; phone push receipt requires installed published app and permission.
-- [x] Repair rendering and strict typing; latest automatic check is clean.
-- [x] Connect Google, Apple and Lovable sign-in; validate recovery-page guard.
-- [x] Test scoring, streaks and guest persistence: 16 tests plus full browser forms/history/settings flow.
-- [x] Finish guarded offline shell and verify layouts at 375, 390, 430 and 1280px.
-- [ ] Verify real account save/import/privacy and social login completion — blocked until a user signs up/signs in; account-session check found no auth users.
-- [ ] Verify installed offline launch — blocked until published; service workers intentionally disabled in preview.- [x] Slim down layout (buttons, cards, chart, forms) and fix Relationship label fit; set iPhone home-screen tags.
-- [ ] Confirm offline launch on the installed phone app — needs publishing; release build generates the offline worker.
+- [x] Polish Settings with compact sections, appearance buttons and grouped profile/account/backup controls.
+- [x] Add multiple private daily reminders with title, time, timezone, message, enabled state, deletion and individual test delivery.
+- [x] Preserve existing reminder data and use atomic per-reminder/device/day delivery claims with private ownership rules.
+- [x] Verify signed-in reminder creation, reload persistence and deletion; check light/dark and 320/390/1280 layouts.
+- [x] Verify Central-time cutoff and reminder payload rules with regression tests; automatic app check is clean.
+- [ ] Verify updated notification banners and installed offline launch on iPhone — requires publishing this update and testing the installed phone app.
