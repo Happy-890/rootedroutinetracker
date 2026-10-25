@@ -62,6 +62,45 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_reminders: {
+        Row: {
+          created_at: string
+          delivery_time: string
+          enabled: boolean
+          id: string
+          legacy_source: boolean
+          message: string
+          timezone: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_time?: string
+          enabled?: boolean
+          id?: string
+          legacy_source?: boolean
+          message?: string
+          timezone?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_time?: string
+          enabled?: boolean
+          id?: string
+          legacy_source?: boolean
+          message?: string
+          timezone?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       entries: {
         Row: {
           archived_import: boolean
@@ -176,6 +215,42 @@ export type Database = {
         }
         Relationships: []
       }
+      reminder_delivery_claims: {
+        Row: {
+          created_at: string
+          device_id: string
+          local_date: string
+          reminder_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          local_date: string
+          reminder_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          local_date?: string
+          reminder_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_delivery_claims_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "push_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminder_delivery_claims_reminder_id_fkey"
+            columns: ["reminder_id"]
+            isOneToOne: false
+            referencedRelation: "daily_reminders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reminder_preferences: {
         Row: {
           delivery_time: string
@@ -216,6 +291,19 @@ export type Database = {
           endpoint: string
           message: string
           p256dh: string
+        }[]
+      }
+      claim_rooted_reminders_v2: {
+        Args: never
+        Returns: {
+          auth: string
+          device_id: string
+          endpoint: string
+          message: string
+          p256dh: string
+          reminder_id: string
+          title: string
+          user_id: string
         }[]
       }
       rooted_scoring_date: { Args: never; Returns: string }

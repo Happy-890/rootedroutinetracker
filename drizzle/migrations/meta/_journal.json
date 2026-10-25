@@ -36,6 +36,13 @@
       "when": 1792818610186,
       "tag": "0004_app_event_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792904559255,
+      "tag": "0005_multiple_titled_daily_reminders",
+      "breakpoints": true
     }
   ]
 }
