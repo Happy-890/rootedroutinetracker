@@ -43,6 +43,13 @@
       "when": 1792904559255,
       "tag": "0005_multiple_titled_daily_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792904596096,
+      "tag": "0006_isolate_reminder_delivery_claims",
+      "breakpoints": true
     }
   ]
 }
