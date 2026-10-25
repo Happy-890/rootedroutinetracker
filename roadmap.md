@@ -1,4 +1,5 @@
 # Rooted completion
+- [ ] Polish Settings and add multiple titled reminders; verify signed-in editing, ownership and delivery payloads.
 - [ ] Enforce Central-time midnight cutoff in account and guest writes, including imports; verify backdate/future rejection.
 - [ ] Add Light/Dark/Device appearance choices.
 - [ ] Add private Web Push reminder preferences, device permission controls, test delivery and scheduled delivery.
