@@ -16,6 +16,7 @@
 - Offline shell uses generated Workbox with a guarded single registrar; never cache auth, API or private account responses.
 - Scoring writes use an authoritative database Central-time clock and pure matching guest guard; historical imported writing is explicitly non-awarding so imports cannot reopen closed days.
 - Appearance is device-local in a shared root provider; theme colors live in semantic CSS tokens so every screen follows the selected mode.
-- Web Push uses a separate messaging-only worker scoped to /notifications/ and Web Crypto delivery; owner-scoped preferences and device subscriptions survive delivery-provider changes.
+- Web Push uses a messaging-only worker registered at root scope and Web Crypto delivery; keep device subscriptions stable across reminder edits.
 - VAPID keys are generated once with Web Crypto and stored encrypted in a server-only table; the application secret protects private key material without exposing it to clients.
-- Scheduled reminders use managed authenticated HTTP callbacks and atomic per-device daily claims; external push endpoints are allowlisted to prevent server-side request forgery.
+- Scheduled reminders use the existing managed authenticated HTTP callback and private atomic claims per reminder, device and local day; external push endpoints are allowlisted to prevent server-side request forgery.
+- Individual reminders live in owner-scoped daily_reminders with title/body/time/timezone/enabled state; retain legacy preference synchronization for older published clients during upgrades.

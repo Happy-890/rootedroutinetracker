@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useRooted } from "@/lib/rooted/store";
 import { isValidTimeZone } from "@/lib/rooted/logic";
 import { useAppearance, type Appearance } from "@/lib/rooted/appearance";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sun, Moon, Monitor, UserRound, Download, LogOut, Sprout } from "lucide-react";
 import { ReminderSettings } from "@/components/rooted/ReminderSettings";
 
 export const Route = createFileRoute("/settings")({
@@ -34,6 +34,7 @@ function SettingsPage() {
   useEffect(() => { setName(r.data.profile.display_name); setTz(r.data.profile.timezone); }, [r.data.profile]);
 
   async function saveProfile() {
+    if (!name.trim()) { toast.error("Enter your display name."); return; }
     if (!isValidTimeZone(tz)) { toast.error("Unknown timezone. Use a name like America/Chicago."); return; }
     if (await r.saveProfile({ display_name: name.trim(), timezone: tz })) toast.success("Profile saved");
     else toast.error(r.save.message ?? "Couldn't save");
@@ -48,61 +49,42 @@ function SettingsPage() {
 
   return (
     <Shell>
-      <h1 className="mb-3 text-xl font-extrabold">Settings</h1>
-      <div className="space-y-4">
-        <section className="space-y-2">
+      <h1 className="mb-4 text-xl font-extrabold">Settings</h1>
+      <div>
+        <section className="space-y-3 pb-5">
           <h2 className="font-extrabold">Appearance</h2>
-          <Select value={appearance} onValueChange={value => setAppearance(value as Appearance)}>
-            <SelectTrigger aria-label="Appearance" className="h-11"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="light">Light</SelectItem><SelectItem value="dark">Dark</SelectItem><SelectItem value="device">Device</SelectItem></SelectContent>
-          </Select>
+          <div className="grid grid-cols-3 gap-1 rounded-lg bg-card p-1" role="group" aria-label="Appearance">
+            {([{ value: "light", label: "Light", Icon: Sun }, { value: "dark", label: "Dark", Icon: Moon }, { value: "device", label: "Device", Icon: Monitor }] as const).map(({ value, label, Icon }) => <Button key={value} variant={appearance === value ? "default" : "ghost"} className="min-w-0 rounded-lg px-2" aria-pressed={appearance === value} onClick={() => setAppearance(value as Appearance)}><Icon />{label}</Button>)}
+          </div>
+        </section>
+        <section className="space-y-3 border-t border-border py-5">
+          <h2 className="flex items-center gap-2 font-extrabold"><UserRound className="size-4 text-primary" />Profile & account</h2>
+          {r.mode === "account" && <p className="break-all text-sm text-muted-foreground">{r.email}</p>}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1"><Label htmlFor="dn">Display name</Label><Input id="dn" value={name} onChange={e => setName(e.target.value)} /></div>
+            <div className="space-y-1"><Label htmlFor="tz">Default reminder timezone</Label><Input id="tz" list="tzs" value={tz} onChange={e => setTz(e.target.value)} /></div>
+          </div>
+          <datalist id="tzs">{(Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.("timeZone").map(z => <option key={z} value={z} />)}</datalist>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+            <Button disabled={!name.trim() || r.save.kind === "saving"} onClick={saveProfile}>Save profile</Button>
+            <Button variant="ghost" onClick={() => void r.signOut()}><LogOut />{r.mode === "account" ? "Log out" : "Leave guest"}</Button>
+          </div>
+          {r.mode !== "account" && <details className="border-t border-border pt-3"><summary className="cursor-pointer text-sm font-semibold">Sign in or create an account</summary><div className="mt-3"><AuthForm /></div></details>}
         </section>
         <ReminderSettings />
-        <section className="space-y-3 rounded-3xl bg-card p-4">
-          <h2 className="font-extrabold">Profile</h2>
-          <div className="space-y-1"><Label htmlFor="dn">Display name</Label><Input id="dn" className="h-11" value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div className="space-y-1">
-            <Label htmlFor="tz">Timezone</Label>
-            <Input id="tz" className="h-11" list="tzs" value={tz} onChange={(e) => setTz(e.target.value)} />
-            <datalist id="tzs">{(Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.("timeZone").map((z) => <option key={z} value={z} />)}</datalist>
-            <p className="text-xs text-muted-foreground">Reminder timezone. Points always close at midnight Central time, with no catch-up window.</p>
-          </div>
-          <Button onClick={saveProfile} className="w-full">Save profile</Button>
+        <section className="space-y-3 border-t border-border py-5">
+          <h2 className="font-extrabold">Data & backup</h2>
+          <p className="text-sm text-muted-foreground">{r.mode === "account" ? "Your writing and progress are private to your account." : "Guest data is stored only on this device."}</p>
+          <Button variant="secondary" className="w-full" onClick={exportData}><Download />Export my data</Button>
+          {r.mode === "account" && r.guestImportAvailable && <div className="space-y-2 border-t border-border pt-3">
+            <p className="text-sm text-muted-foreground">Guest writing found on this device. Older entries stay archived; only today's points are imported.</p>
+            <Button variant="outline" className="w-full" onClick={async () => { const ok = await r.importGuest(); toast[ok ? "success" : "error"](ok ? "Guest data imported" : "Couldn't import guest data"); }}>Import guest data</Button>
+          </div>}
         </section>
-
-        <section className="space-y-3 rounded-3xl bg-card p-4">
-          <h2 className="font-extrabold">Account</h2>
-          {r.mode === "account" ? (
-            <>
-              <p className="text-sm text-muted-foreground">Signed in as {r.email}. Your data is saved to your private account.</p>
-              {r.guestImportAvailable && (
-                <div className="rounded-2xl bg-gold-soft p-3 text-sm">
-                  <p>Guest data was found on this device. Import it once? Older writing is kept in your archives, but only today's Central-time points can be imported.</p>
-                  <Button className="mt-2 w-full" onClick={async () => toast[(await r.importGuest()) ? "success" : "error"]((await Promise.resolve(r.save.message)) ?? "Import finished")}>Import guest data</Button>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-muted-foreground">You're using guest mode. Data is stored only on this device and is not backed up. Create an account or sign in to keep it safe — you can import your guest data afterward.</p>
-              <AuthForm />
-            </>
-          )}
-          <Button variant="secondary" className="w-full" onClick={() => void r.signOut()}>{r.mode === "account" ? "Log out" : "Leave guest mode"}</Button>
-        </section>
-
-        <section className="space-y-3 rounded-3xl bg-card p-4">
-          <h2 className="font-extrabold">Backup</h2>
-          <Button variant="secondary" className="w-full" onClick={exportData}>Export my data (JSON)</Button>
-        </section>
-
-        <section className="space-y-2 rounded-3xl bg-card p-4 text-sm">
-          <h2 className="font-extrabold">Add to Home Screen (iPhone)</h2>
-          <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
-            <li>Open Rooted in Safari.</li>
-            <li>Tap the Share button.</li>
-            <li>Choose “Add to Home Screen”, then tap Add.</li>
-          </ol>
+        <section className="space-y-3 border-t border-border py-5 text-xs text-muted-foreground">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-foreground"><Sprout className="size-4 text-primary" />Rooted</h2>
+          <p>Points close at midnight Central time. No catch-up window.</p>
+          <details><summary className="cursor-pointer font-semibold">Add to Home Screen</summary><p className="mt-2">In Safari, tap Share → Add to Home Screen → Add.</p></details>
         </section>
       </div>
     </Shell>
