@@ -20,3 +20,12 @@ export const subscriptionSchema = z.object({
   endpoint: z.string().max(2048).refine(allowedPushEndpoint, "Unsupported notification service"),
   keys: z.object({ p256dh: z.string().regex(/^[A-Za-z0-9_-]{87}={0,2}$/), auth: z.string().regex(/^[A-Za-z0-9_-]{22}={0,2}$/) }),
 });
+export const scheduledReminderSchema = reminderSchema.extend({
+  id: z.string().uuid().optional(),
+  title: z.string().trim().min(1).max(80),
+});
+export type DailyReminder = z.infer<typeof scheduledReminderSchema> & { id: string };
+
+export function reminderPayload(title: string, body: string, id?: string) {
+  return { title, body, tag: id ? `rooted-reminder-${id}` : "rooted-reminder-test" };
+}

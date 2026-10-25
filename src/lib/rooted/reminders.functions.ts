@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireVerifiedAuth } from "./auth.server";
 import { z } from "zod";
-import { reminderSchema, subscriptionSchema } from "./push-validation";
+import { reminderSchema, scheduledReminderSchema, subscriptionSchema } from "./push-validation";
 
 export const loadReminders = createServerFn({ method: "GET" }).middleware([requireVerifiedAuth]).handler(async ({ context }) => {
   const result = await context.supabase.from("reminder_preferences").select("enabled,delivery_time,timezone,message").eq("user_id", context.userId).maybeSingle();
