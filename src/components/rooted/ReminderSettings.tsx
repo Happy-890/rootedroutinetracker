@@ -284,7 +284,8 @@ export function ReminderSettings() {
                           </div>
                           <div className="flex items-center justify-between gap-2">
                             <Button
-                              siz…4 tokens truncated…                         disabled={busy}
+                              size="sm"
+                              disabled={busy}
                               onClick={() => void run(() => save(row))}
                             >
                               <Save />
