@@ -9,16 +9,16 @@ This README describes the code on `main` and the live application's `public` dat
 
 ## App behavior
 
-| Area         | Implemented behavior                                                                                                                                                     |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Home         | Four pillar cards, today's score, period/all-time totals, and Daily/Weekly/Monthly charts. Six Faith/Family/Fitness habits toggle directly; Finance opens Learn or Plan. |
-| Finance      | Learn saves a written entry. Plan awards its activity after two review attestations. No banking or calendar integration.                                                 |
-| Gratitude    | Three required items, saved as an entry.                                                                                                                                 |
-| Journal      | Free-Flow, Re-Frame with nine guided questions, and Devotional; drafts survive navigation and refresh.                                                                   |
-| History      | Date/type filtering, activity history, and entry viewing/editing.                                                                                                        |
-| Settings     | Light/Dark/Device appearance, profile name/timezone, explicit profile save, account controls, multiple reminders, notification testing/delivery log, and JSON export.    |
-| Accounts     | Supabase email/password authentication, password reset, managed Lovable social sign-in, and device-only guest mode.                                                      |
-| Installation | PWA manifest, app icons, Safari Add to Home Screen guidance, offline shell, and Web Push worker.                                                                         |
+| Area         | Implemented behavior                                                                                                                                                                                                                |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home         | Four pillar cards, a compact today/period/Day–Week–Month stats strip, and a taller chart. All-time points stay in the header. Six Faith/Family/Fitness habits toggle directly; Finance opens Learn or Plan.                         |
+| Finance      | Learn saves a written entry. Plan awards its activity after two review attestations. No banking or calendar integration.                                                                                                            |
+| Gratitude    | Three required items, saved as an entry.                                                                                                                                                                                            |
+| Journal      | Free-Flow, Re-Frame with nine guided questions, and Devotional; drafts survive navigation and refresh.                                                                                                                              |
+| History      | Date/type filtering, activity history, and entry viewing/editing.                                                                                                                                                                   |
+| Settings     | Compact Light/Dark/Device dropdown, profile name/timezone auto-save on blur, account controls, expandable reminder banners, notification testing, and JSON export. Server delivery logging continues; its Settings panel is hidden. |
+| Accounts     | Supabase email/password authentication, password reset, managed Lovable social sign-in, and device-only guest mode.                                                                                                                 |
+| Installation | PWA manifest, app icons, Safari Add to Home Screen guidance, offline shell, and Web Push worker.                                                                                                                                    |
 
 Community features, chat, payments, bank connections, and AI coaching are outside the current app.
 
@@ -161,7 +161,7 @@ On iPhone, notifications require installing Rooted to the Home Screen and granti
 | `0005_multiple_titled_daily_reminders.sql`        | Multiple reminders, legacy backfill/synchronization, delivery claims, and v2 claim RPC.                                      |
 | `0006_isolate_reminder_delivery_claims.sql`       | Revokes client claim-table access and adds legacy duplicate protection to the v2 RPC.                                        |
 
-The inspected live public objects reflect the features in migrations `0000`–`0006`; this is structural verification, not verification of migration-ledger entries. The earlier proposed compact UI/master-timezone patch is not on `main` or reflected in the inspected live profile triggers. Do not describe those changes as deployed.
+The inspected live public objects reflect the features in migrations `0000`–`0006`; this is structural verification, not verification of migration-ledger entries. The compact UI update uses the existing schema and reminder APIs without a migration. Reminder timezone controls remain in each expanded editor; changing the profile timezone sets the default for new reminders and does not reschedule existing ones. A master timezone for all reminders is deferred until its database behavior can be deployed and verified.
 
 Use the managed deployment/migration workflow to apply new versioned SQL in order. `drizzle.config.ts` reads the server-only `LOVABLE_DB_MIGRATION_URL`. `drizzle/schema.ts` and migration snapshots are intentionally empty/generated scaffolding; they are not a complete declarative representation of this database. Do not use schema push to reconstruct production from that empty file. Keep generated Supabase types aligned with actual schema changes.
 

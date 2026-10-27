@@ -1,11 +1,28 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, ChartColumnIncreasing, ChevronRight, Cross, Dumbbell, NotebookPen, Sparkles, Users } from "lucide-react";
+import {
+  Check,
+  ChartColumnIncreasing,
+  ChevronRight,
+  Cross,
+  Dumbbell,
+  NotebookPen,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 import { Shell } from "@/components/rooted/Shell";
 import { useRooted } from "@/lib/rooted/store";
 import {
-  ACTIVITY_LABEL, MAX_DAILY, PILLARS, chart, dayPoints, isDone, pillarCount, totalPoints,
-  type Activity, type Period, type PillarId,
+  ACTIVITY_LABEL,
+  MAX_DAILY,
+  PILLARS,
+  chart,
+  dayPoints,
+  isDone,
+  pillarCount,
+  type Activity,
+  type Period,
+  type PillarId,
 } from "@/lib/rooted/logic";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,9 +33,15 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { title: "Rooted — Build what matters, daily" },
-      { name: "description", content: "Track Faith, Family, Fitness and Finance habits daily with Rooted." },
+      {
+        name: "description",
+        content: "Track Faith, Family, Fitness and Finance habits daily with Rooted.",
+      },
       { property: "og:title", content: "Rooted — Build what matters, daily" },
-      { property: "og:description", content: "Track Faith, Family, Fitness and Finance habits daily with Rooted." },
+      {
+        property: "og:description",
+        content: "Track Faith, Family, Fitness and Finance habits daily with Rooted.",
+      },
     ],
   }),
   component: Home,
@@ -39,7 +62,9 @@ function Home() {
         <h2 className="text-base font-extrabold">4 Pillars</h2>
       </div>
       <div className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-3">
-        {PILLARS.map((p) => <PillarCard key={p.id} id={p.id} />)}
+        {PILLARS.map((p) => (
+          <PillarCard key={p.id} id={p.id} />
+        ))}
       </div>
       <h2 className="mt-5 text-base font-extrabold">Bonus Points</h2>
       <div className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-3">
@@ -55,31 +80,39 @@ function ProgressCard() {
   const [period, setPeriod] = useState<Period>("daily");
   const c = chart(data, today, period);
   const todayPts = dayPoints(data, today);
-  const top = Math.max(...c.bars.map((b) => b.max));
   const scaleMax = period === "daily" ? MAX_DAILY : Math.max(1, ...c.bars.map((b) => b.value));
   return (
-    <section className="rounded-2xl bg-card p-3.5" aria-labelledby="progress-h">
-      <div className="flex items-center justify-between">
-        <h2 id="progress-h" className="text-base font-extrabold">Progress</h2>
-        <label className="sr-only" htmlFor="period">Chart period</label>
-        <select
-          id="period"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value as Period)}
-          className="h-9 rounded-lg border bg-surface px-2.5 font-bold"
-        >
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-        </select>
-      </div>
-      <div className="mt-3 grid grid-cols-3 divide-x divide-border rounded-xl bg-surface py-2 text-center">
+    <section className="rounded-2xl bg-card p-3.5" aria-label="Progress">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-1">
         <Stat label="Today" value={`${todayPts}/${MAX_DAILY}`} />
-        <Stat label={c.caption.replace(/\s*\(.*\)/, "")} value={String(c.total)} />
-        <Stat label="All-time" value={`${totalPoints(data)} P`} />
+        <Stat label={c.caption.replace(/\s*\(.*\)/, "")} value={`${c.total} pts`} />
+        <div className="flex rounded-full bg-surface p-0.5" role="group" aria-label="Chart period">
+          {(
+            [
+              { value: "daily", label: "Day" },
+              { value: "weekly", label: "Week" },
+              { value: "monthly", label: "Month" },
+            ] as const
+          ).map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={period === value}
+              onClick={() => setPeriod(value)}
+              className={cn(
+                "min-h-9 rounded-full px-2 text-[11px] font-bold transition-colors focus-visible:outline-2 focus-visible:outline-ring",
+                period === value
+                  ? "bg-gold-gradient text-primary-foreground"
+                  : "text-muted-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
       <div
-        className="mt-3 flex h-24 items-end gap-1.5"
+        className="mt-3 flex h-32 items-end gap-1.5"
         role="img"
         aria-label={`${c.caption}: ${c.bars.map((b) => `${b.title} ${b.value} points`).join(", ")}`}
       >
@@ -88,11 +121,21 @@ function ProgressCard() {
             <span className="text-[10px] font-bold text-muted-foreground">{b.value || ""}</span>
             <div className="flex w-full flex-1 items-end overflow-hidden rounded-md bg-surface">
               <div
-                className={cn("w-full rounded-md transition-[height] duration-500 ease-out motion-reduce:transition-none", b.current ? "bg-gold-gradient" : "bg-teal")}
+                className={cn(
+                  "w-full rounded-md transition-[height] duration-500 ease-out motion-reduce:transition-none",
+                  b.current ? "bg-gold-gradient" : "bg-teal",
+                )}
                 style={{ height: `${(b.value / scaleMax) * 100}%` }}
               />
             </div>
-            <span className={cn("text-[11px] font-bold", b.current ? "text-primary" : "text-muted-foreground")}>{b.label}</span>
+            <span
+              className={cn(
+                "text-[11px] font-bold",
+                b.current ? "text-primary" : "text-muted-foreground",
+              )}
+            >
+              {b.label}
+            </span>
           </div>
         ))}
       </div>
@@ -117,13 +160,23 @@ function PillarCard({ id }: { id: PillarId }) {
   const full = count === 2;
   const { icon: Icon, color } = ICONS[id];
   return (
-    <section className={cn("rounded-2xl border border-transparent bg-card p-2 transition-colors sm:p-3", full && "card-gold")}>
+    <section
+      className={cn(
+        "rounded-2xl border border-transparent bg-card p-2 transition-colors sm:p-3",
+        full && "card-gold",
+      )}
+    >
       <div className="flex items-center justify-between px-1">
         <div className="flex min-w-0 items-center gap-1.5">
           <Icon className={cn("size-[18px] shrink-0", color)} strokeWidth={2.5} />
           <h3 className="truncate text-[15px] font-extrabold">{p.name}</h3>
         </div>
-        <span className="shrink-0 text-xs font-extrabold text-teal" aria-label={`${count} of 2 complete`}>{count}/2</span>
+        <span
+          className="shrink-0 text-xs font-extrabold text-teal"
+          aria-label={`${count} of 2 complete`}
+        >
+          {count}/2
+        </span>
       </div>
       <div className="mt-2 space-y-1.5">
         {p.activities.map((a) =>
@@ -135,17 +188,26 @@ function PillarCard({ id }: { id: PillarId }) {
               className={activityClass(isDone(data, today, a))}
             >
               <span className="min-w-0 truncate">{ACTIVITY_LABEL[a]}</span>
-              {isDone(data, today, a) ? <DoneMark /> : <ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
+              {isDone(data, today, a) ? (
+                <DoneMark />
+              ) : (
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              )}
             </Link>
           ) : (
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               key={a}
               aria-pressed={isDone(data, today, a)}
               onClick={() => void toggle(a as Activity)}
               className={activityClass(isDone(data, today, a))}
             >
               <span className="min-w-0 truncate">{ACTIVITY_LABEL[a]}</span>
-              {isDone(data, today, a) ? <DoneMark /> : <span className="size-[18px] shrink-0 rounded-full border-[1.5px] border-muted-foreground/50" />}
+              {isDone(data, today, a) ? (
+                <DoneMark />
+              ) : (
+                <span className="size-[18px] shrink-0 rounded-full border-[1.5px] border-muted-foreground/50" />
+              )}
             </Button>
           ),
         )}
@@ -169,11 +231,27 @@ function activityClass(done: boolean) {
   );
 }
 
-function BonusButton({ to, activity, label, icon: Icon }: { to: "/gratitude" | "/journal"; activity: Activity; label: string; icon: typeof Cross }) {
+function BonusButton({
+  to,
+  activity,
+  label,
+  icon: Icon,
+}: {
+  to: "/gratitude" | "/journal";
+  activity: Activity;
+  label: string;
+  icon: typeof Cross;
+}) {
   const { data, today } = useRooted();
   const done = isDone(data, today, activity);
   return (
-    <Link to={to} className={cn("flex min-h-11 items-center gap-2 rounded-lg px-3", done ? "bg-gold-gradient text-primary-foreground" : "bg-card")}>
+    <Link
+      to={to}
+      className={cn(
+        "flex min-h-11 items-center gap-2 rounded-lg px-3",
+        done ? "bg-gold-gradient text-primary-foreground" : "bg-card",
+      )}
+    >
       <Icon className={cn("size-[18px] shrink-0", !done && "text-primary")} />
       <span className="flex-1 truncate text-sm font-extrabold">{label}</span>
       {done && <Check className="size-4 shrink-0" strokeWidth={3} />}
