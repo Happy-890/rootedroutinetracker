@@ -24,6 +24,13 @@ import {
   type Period,
   type PillarId,
 } from "@/lib/rooted/logic";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -86,33 +93,33 @@ function ProgressCard() {
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-1">
         <Stat label="Today" value={`${todayPts}/${MAX_DAILY}`} />
         <Stat label={c.caption.replace(/\s*\(.*\)/, "")} value={`${c.total} pts`} />
-        <div className="flex rounded-full bg-surface p-0.5" role="group" aria-label="Chart period">
-          {(
-            [
-              { value: "daily", label: "Day" },
-              { value: "weekly", label: "Week" },
-              { value: "monthly", label: "Month" },
-            ] as const
-          ).map(({ value, label }) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={period === value}
-              onClick={() => setPeriod(value)}
-              className={cn(
-                "min-h-9 rounded-full px-2 text-[11px] font-bold transition-colors focus-visible:outline-2 focus-visible:outline-ring",
-                period === value
-                  ? "bg-gold-gradient text-primary-foreground"
-                  : "text-muted-foreground",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <Select value={period} onValueChange={(value) => setPeriod(value as Period)}>
+          <SelectTrigger
+            aria-label="Chart period"
+            className="h-10 w-28 rounded-full border-transparent bg-surface font-bold"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent
+            align="end"
+            sideOffset={6}
+            className="rooted-menu-motion min-w-28 rounded-2xl"
+          >
+            <SelectItem value="daily" className="min-h-11 rounded-xl">
+              Day
+            </SelectItem>
+            <SelectItem value="weekly" className="min-h-11 rounded-xl">
+              Week
+            </SelectItem>
+            <SelectItem value="monthly" className="min-h-11 rounded-xl">
+              Month
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div
-        className="mt-3 flex h-32 items-end gap-1.5"
+        key={period}
+        className="rooted-chart-motion mt-3 flex h-32 items-end gap-1.5"
         role="img"
         aria-label={`${c.caption}: ${c.bars.map((b) => `${b.title} ${b.value} points`).join(", ")}`}
       >

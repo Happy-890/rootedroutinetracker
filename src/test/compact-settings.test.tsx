@@ -6,13 +6,17 @@ const mocks = vi.hoisted(() => ({
   save: vi.fn(),
   load: vi.fn(),
   saveProfile: vi.fn(),
+  setAppearance: vi.fn(),
+  records: {} as Record<string, true>,
   profile: { display_name: "Harvey", timezone: "America/Chicago" },
 }));
 vi.mock("@/lib/rooted/store", () => ({
   useRooted: () => ({
     mode: "account",
     userId: "test-user",
-    data: { profile: mocks.profile },
+    data: { profile: mocks.profile, records: mocks.records, entries: [] },
+    today: "2026-10-26",
+    toggle: vi.fn(),
     saveProfile: mocks.saveProfile,
     save: { kind: "idle" },
   }),
@@ -22,10 +26,13 @@ vi.mock("@/components/rooted/Shell", () => ({
 }));
 vi.mock("@/components/rooted/AuthScreen", () => ({ AuthForm: () => null }));
 vi.mock("@/lib/rooted/appearance", () => ({
-  useAppearance: () => ({ appearance: "device", setAppearance: vi.fn() }),
+  useAppearance: () => ({ appearance: "device", setAppearance: mocks.setAppearance }),
 }));
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: unknown) => ({ options }),
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
 vi.mock("@/lib/rooted/reminders.functions", () => ({
   loadScheduledReminders: mocks.load,
@@ -41,6 +48,8 @@ vi.mock("@/lib/rooted/push-client", () => ({
 import { ReminderSettings } from "@/components/rooted/ReminderSettings";
 import { formatReminderTime } from "@/lib/rooted/reminder-time";
 import { Route } from "@/routes/settings";
+import { Route as HomeRoute } from "@/routes/index";
+const Home = HomeRoute.options.component as ComponentType;
 const Settings = Route.options.component as ComponentType;
 const reminder = {
   id: "5d2daf6b-d132-4b67-94ac-f54a0cbbca74",
@@ -53,6 +62,10 @@ const reminder = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.records = {};
+  HTMLElement.prototype.scrollIntoView = vi.fn();
+  HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
+  HTMLElement.prototype.releasePointerCapture = vi.fn();
   mocks.load.mockResolvedValue([reminder]);
   mocks.save.mockImplementation(async ({ data }) => data);
   mocks.saveProfile.mockResolvedValue(true);
@@ -60,6 +73,32 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("Compact settings", () => {
+  it("opens an icon-only appearance menu with accessible choices", async () => {
+    render(<Settings />);
+    const trigger = screen.getByRole("button", { name: "Appearance: Device" });
+    expect(trigger).toHaveTextContent("");
+    fireEvent.keyDown(trigger, { key: "ArrowDown" });
+    const light = await screen.findByRole("menuitemradio", { name: "Light" });
+    expect(light).toHaveTextContent("Light"); // screen-reader-only label
+    expect(screen.getByRole("menuitemradio", { name: "Device" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    fireEvent.click(light);
+    expect(mocks.setAppearance).toHaveBeenCalledWith("light");
+  });
+  it("changes chart periods from a dropdown without changing today's score", async () => {
+    mocks.records = { "2026-10-26|bible": true, "2026-10-25|prayer": true };
+    render(<Home />);
+    expect(screen.getByText("1/10")).toBeInTheDocument();
+    expect(screen.getByText("1 pts")).toBeInTheDocument();
+    const trigger = screen.getByRole("combobox", { name: "Chart period" });
+    fireEvent.keyDown(trigger, { key: "ArrowDown" });
+    fireEvent.click(await screen.findByRole("option", { name: "Month" }));
+    expect(screen.getByText("Last 6 months")).toBeInTheDocument();
+    expect(screen.getByText("2 pts")).toBeInTheDocument();
+    expect(screen.getByText("1/10")).toBeInTheDocument();
+  });
   it("shows saved reminders collapsed and preserves their existing timezone", async () => {
     render(<ReminderSettings />);
     const edit = await screen.findByRole("button", { name: "Edit reminder 1" });

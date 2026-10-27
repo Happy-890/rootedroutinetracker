@@ -72,10 +72,24 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html, body { background-color: var(--color-background); color: var(--color-foreground); overflow-x: hidden; }
-  body { font-family: var(--font-sans); -webkit-tap-highlight-color: transparent; }
-  input, textarea, select { font-size: 16px; } /* prevents iOS zoom */
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    overflow-x: hidden;
+  }
+  body {
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  } /* prevents iOS zoom */
 }
 
 :root[data-theme="light"] {
@@ -103,12 +117,86 @@
   --gold: oklch(0.56 0.1 85);
   --success: oklch(0.5 0.1 180);
 }
-:root:not([data-theme="light"]) { color-scheme: dark; }
+:root:not([data-theme="light"]) {
+  color-scheme: dark;
+}
 
-@utility bg-gold-gradient { background-image: var(--gradient-gold); }
-@utility pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem); }
-@utility pt-safe { padding-top: calc(env(safe-area-inset-top) + 0.75rem); }
+@utility bg-gold-gradient {
+  background-image: var(--gradient-gold);
+}
+@utility pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+}
+@utility pt-safe {
+  padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+}
 @utility card-gold {
   border-color: var(--gold);
   background-image: linear-gradient(160deg, oklch(0.76 0.12 85 / 0.22), oklch(0.76 0.12 85 / 0.06));
+}
+
+/* Short, anchored motion for menus; transform/opacity avoid layout jumps. */
+.rooted-menu-motion {
+  transform-origin: var(
+    --radix-select-content-transform-origin,
+    var(--radix-dropdown-menu-content-transform-origin)
+  );
+}
+.rooted-menu-motion[data-state="open"] {
+  animation: rooted-menu-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.rooted-menu-motion[data-state="closed"] {
+  animation: rooted-menu-out 160ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+.rooted-chart-motion,
+.rooted-icon-motion {
+  animation: rooted-content-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes rooted-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes rooted-menu-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.98);
+  }
+}
+@keyframes rooted-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  .bg-card,
+  .bg-surface,
+  .bg-popover {
+    transition:
+      background-color 240ms ease,
+      color 240ms ease,
+      border-color 240ms ease;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rooted-menu-motion[data-state],
+  .rooted-chart-motion,
+  .rooted-icon-motion {
+    animation: none;
+  }
 }

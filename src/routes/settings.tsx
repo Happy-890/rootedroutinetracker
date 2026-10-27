@@ -11,12 +11,12 @@ import { isValidTimeZone } from "@/lib/rooted/logic";
 import { useAppearance, type Appearance } from "@/lib/rooted/appearance";
 import { Sun, Moon, Monitor, UserRound, Download, LogOut, Sprout, Check } from "lucide-react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ReminderSettings } from "@/components/rooted/ReminderSettings";
 
@@ -43,6 +43,13 @@ export const Route = createFileRoute("/settings")({
 function SettingsPage() {
   const r = useRooted();
   const { appearance, setAppearance } = useAppearance();
+  const appearanceOptions = [
+    { value: "light", label: "Light", Icon: Sun },
+    { value: "dark", label: "Dark", Icon: Moon },
+    { value: "device", label: "Device", Icon: Monitor },
+  ] as const;
+  const selectedAppearance = appearanceOptions.find((option) => option.value === appearance)!;
+  const AppearanceIcon = selectedAppearance.Icon;
   const [name, setName] = useState(r.data.profile.display_name);
   const [tz, setTz] = useState(r.data.profile.timezone);
   const lastSaved = useRef(r.data.profile);
@@ -135,27 +142,45 @@ function SettingsPage() {
       <div>
         <section className="flex items-center justify-between gap-3 pb-5">
           <h2 className="font-extrabold">Appearance</h2>
-          <Select value={appearance} onValueChange={(value) => setAppearance(value as Appearance)}>
-            <SelectTrigger className="w-36 bg-card" aria-label="Appearance">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(
-                [
-                  { value: "light", label: "Light", Icon: Sun },
-                  { value: "dark", label: "Dark", Icon: Moon },
-                  { value: "device", label: "Device", Icon: Monitor },
-                ] as const
-              ).map(({ value, label, Icon }) => (
-                <SelectItem key={value} value={value}>
-                  <span className="flex items-center gap-2">
-                    <Icon className="size-4" />
-                    {label}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full bg-card"
+                aria-label={`Appearance: ${selectedAppearance.label}`}
+                title={`Appearance: ${selectedAppearance.label}`}
+              >
+                <AppearanceIcon
+                  key={appearance}
+                  className="rooted-icon-motion size-5"
+                  aria-hidden="true"
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={8}
+              className="rooted-menu-motion min-w-0 rounded-full p-1.5"
+            >
+              <DropdownMenuRadioGroup
+                value={appearance}
+                onValueChange={(value) => setAppearance(value as Appearance)}
+              >
+                {appearanceOptions.map(({ value, label, Icon }) => (
+                  <DropdownMenuRadioItem
+                    key={value}
+                    value={value}
+                    title={label}
+                    className="my-0.5 size-11 justify-center rounded-full p-0 transition-colors duration-200 data-[state=checked]:bg-gold-soft data-[state=checked]:text-primary [&>span:first-child]:hidden"
+                  >
+                    <Icon className="size-5" aria-hidden="true" />
+                    <span className="sr-only">{label}</span>
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </section>
         <section className="space-y-3 border-t border-border py-5">
           <h2 className="flex items-center gap-2 font-extrabold">

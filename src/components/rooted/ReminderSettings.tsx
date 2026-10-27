@@ -233,7 +233,7 @@ export function ReminderSettings() {
                       id={`edit-${row.key}`}
                       inert={!row.editing}
                       className={cn(
-                        "grid transition-[grid-template-rows,opacity] duration-200 motion-reduce:transition-none",
+                        "grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
                         row.editing ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
                       )}
                     >
@@ -284,8 +284,7 @@ export function ReminderSettings() {
                           </div>
                           <div className="flex items-center justify-between gap-2">
                             <Button
-                              size="sm"
-                              disabled={busy}
+                              siz…4 tokens truncated…                         disabled={busy}
                               onClick={() => void run(() => save(row))}
                             >
                               <Save />
