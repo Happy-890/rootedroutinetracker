@@ -1,3 +1,4 @@
+import { ReminderStack } from "./ReminderStack";
 import { NotificationBanner } from "./NotificationBanner";
 import { useEffect, useRef, useState } from "react";
 import { Bell, Settings2, Plus, Trash2, Save, RefreshCw, Pencil } from "lucide-react";
@@ -64,6 +65,8 @@ export function ReminderSettings() {
   const [device, setDevice] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [reload, setReload] = useState(0);
+  const timezone = useRef(r.data.profile.timezone);
+  timezone.current = r.data.profile.timezone;
   useEffect(() => {
     let active = true;
     setReady(false);
@@ -74,7 +77,22 @@ export function ReminderSettings() {
     Promise.all([loadScheduledReminders(), deviceSubscription()])
       .then(([saved, sub]) => {
         if (!active) return;
-        setRows(saved.map((row) => ({ ...row, key: row.id, dirty: false, editing: false })));
+        const clock = new Intl.DateTimeFormat("en-GB", {
+          timeZone: timezone.current,
+          hour: "2-digit",
+          minute: "2-digit",
+          hourCycle: "h23",
+        }).format(new Date());
+        const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+        const now = minutes(clock);
+        // Pick the next enabled reminder for the front without reordering drafts during edits.
+        const ordered = [...saved].sort(
+          (a, b) =>
+            Number(b.enabled) - Number(a.enabled) ||
+            ((minutes(a.delivery_time) - now + 1440) % 1440) -
+              ((minutes(b.delivery_time) - now + 1440) % 1440),
+        );
+        setRows(ordered.map((row) => ({ ...row, key: row.id, dirty: false, editing: false })));
         setDevice(!!sub);
         setReady(true);
       })
@@ -120,11 +138,6 @@ export function ReminderSettings() {
           <Bell className="size-4 shrink-0 text-primary" />
           Notifications
         </h2>
-        {r.mode === "account" && (
-          <span className="text-xs font-semibold text-muted-foreground">
-            {rows.filter((row) => row.enabled && row.id).length} active
-          </span>
-        )}
       </div>
       {r.mode !== "account" ? (
         <p className="text-sm text-muted-foreground">Sign in to save your daily reminders.</p>
@@ -199,7 +212,7 @@ export function ReminderSettings() {
               {rows.length === 0 && (
                 <p className="py-3 text-sm text-muted-foreground">No daily reminders yet.</p>
               )}
-              <div className="space-y-3">
+              <ReminderStack editing={rows.some((row) => row.editing)}>
                 {rows.map((row, index) => (
                   <article
                     key={row.key}
@@ -321,7 +334,7 @@ export function ReminderSettings() {
                     </div>
                   </article>
                 ))}
-              </div>
+              </ReminderStack>
               <Button
                 variant="outline"
                 className="w-full"

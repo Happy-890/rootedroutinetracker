@@ -1,4 +1,4 @@
-import { cleanup, act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ComponentType } from "react";
 
@@ -88,6 +88,66 @@ afterEach(() => {
 });
 
 describe("Compact settings", () => {
+  it("expands a stack, ignores inside taps, and restacks on an outside tap", async () => {
+    mocks.load.mockResolvedValue([
+      reminder,
+      {
+        ...reminder,
+        id: "6d2daf6b-d132-4b67-94ac-f54a0cbbca74",
+        title: "Evening Focus",
+        delivery_time: "20:00",
+      },
+    ]);
+    render(<ReminderSettings />);
+    const expand = await screen.findByRole("button", { name: "Expand reminders" });
+    expect(expand).toHaveTextContent("");
+    expect(screen.queryByText(/active$|Tap to expand|reminders$/)).not.toBeInTheDocument();
+    fireEvent.click(expand);
+    const edit = screen.getByRole("button", { name: "Edit reminder 1" });
+    expect(edit.closest("[inert]")).toBeNull();
+    fireEvent.pointerDown(edit);
+    expect(screen.queryByRole("button", { name: "Expand reminders" })).not.toBeInTheDocument();
+    fireEvent.pointerDown(document.body);
+    expect(screen.getByRole("button", { name: "Expand reminders" })).toBeInTheDocument();
+  });
+  it("protects an open editor and preserves a draft through restacking", async () => {
+    mocks.load.mockResolvedValue([
+      reminder,
+      { ...reminder, id: "6d2daf6b-d132-4b67-94ac-f54a0cbbca74", title: "Evening Focus" },
+    ]);
+    render(<ReminderSettings />);
+    fireEvent.click(await screen.findByRole("button", { name: "Expand reminders" }));
+    const edit = screen.getByRole("button", { name: "Edit reminder 1" });
+    fireEvent.click(edit);
+    const article = edit.closest("article")!;
+    const title = article.querySelector("input[id^=title-]")!;
+    fireEvent.change(title, { target: { value: "Keep this draft" } });
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("button", { name: "Expand reminders" })).not.toBeInTheDocument();
+    fireEvent.click(edit);
+    fireEvent.pointerDown(document.body);
+    fireEvent.click(screen.getByRole("button", { name: "Expand reminders" }));
+    fireEvent.click(edit);
+    expect(title).toHaveValue("Keep this draft");
+  });
+  it("opens the stack when adding a reminder and keeps it expanded after saving", async () => {
+    mocks.load.mockResolvedValue([
+      reminder,
+      { ...reminder, id: "6d2daf6b-d132-4b67-94ac-f54a0cbbca74", title: "Evening Focus" },
+    ]);
+    render(<ReminderSettings />);
+    await screen.findByRole("button", { name: "Expand reminders" });
+    fireEvent.click(screen.getByRole("button", { name: "Add reminder" }));
+    expect(screen.queryByRole("button", { name: "Expand reminders" })).not.toBeInTheDocument();
+    const edit = screen.getByRole("button", { name: "Edit reminder 3" });
+    expect(edit).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(within(edit.closest("article")!).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(edit).toHaveAttribute("aria-expanded", "false"));
+    expect(screen.queryByRole("button", { name: "Expand reminders" })).not.toBeInTheDocument();
+    fireEvent.pointerDown(document.body);
+    expect(screen.getByRole("button", { name: "Expand reminders" })).toBeInTheDocument();
+  });
+
   it("replaces Enable with Manage and sends confirmation only after setup succeeds", async () => {
     render(<ReminderSettings />);
     const enable = await screen.findByRole("button", { name: "Enable" });
