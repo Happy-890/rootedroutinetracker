@@ -1,3 +1,4 @@
+// Workbox's Rollup plugins need the direct estree-walker 2.x CommonJS build dependency.
 import { generateSW } from 'workbox-build';
 import { readFile, access } from 'node:fs/promises';
 const output = '.output/public';
