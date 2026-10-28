@@ -1,12 +1,33 @@
-import { registerDevice, notificationKey } from "./reminders.functions";
+import { registerRootedWorker } from "./pwa";
+import { registerDevice, notificationKey, ownsDevice, removeDevice } from "./reminders.functions";
 
-export async function deviceSubscription() {
+async function localSubscription() {
   if (!("serviceWorker" in navigator)) return null;
   // iOS requires the push worker at root scope; check root first, then the legacy scope.
-  const registration =
-    (await navigator.serviceWorker.getRegistration("/")) ??
-    (await navigator.serviceWorker.getRegistration("/notifications/"));
-  return registration?.pushManager.getSubscription() ?? null;
+  const root = await navigator.serviceWorker.getRegistration("/");
+  const sub = await root?.pushManager.getSubscription();
+  if (sub) return sub;
+  const legacy = await navigator.serviceWorker.getRegistration("/notifications/");
+  return legacy?.pushManager.getSubscription() ?? null;
+}
+export async function deviceSubscription() {
+  const sub = await localSubscription();
+  if (!sub || !("Notification" in window) || Notification.permission !== "granted") return null;
+  return (await ownsDevice({ data: { endpoint: sub.endpoint } })).owned ? sub : null;
+}
+export async function reconcileDeviceAccount() {
+  const sub = await localSubscription();
+  if (sub && !(await ownsDevice({ data: { endpoint: sub.endpoint } })).owned)
+    await sub.unsubscribe();
+}
+export async function unsubscribeDeviceLocally() {
+  await (await localSubscription())?.unsubscribe();
+}
+export async function releaseDevice() {
+  const sub = await localSubscription();
+  if (!sub) return;
+  await removeDevice({ data: { endpoint: sub.endpoint } });
+  await sub.unsubscribe();
 }
 export async function enableDevice() {
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window))
@@ -31,22 +52,11 @@ export async function enableDevice() {
   );
   // Unregister the legacy scoped worker so only the root-scope worker remains.
   const legacy = await navigator.serviceWorker.getRegistration("/notifications/");
-  if (legacy) await legacy.unregister();
-  const registration = await navigator.serviceWorker.register("/rooted-push-worker.js", {
-    scope: "/",
-  });
-  if (!registration.active)
-    await new Promise<void>((resolve, reject) => {
-      const worker = registration.installing ?? registration.waiting;
-      if (!worker) {
-        reject(new Error("Couldn't enable notifications. Try again."));
-        return;
-      }
-      worker.addEventListener("statechange", () => {
-        if (worker.state === "activated") resolve();
-        if (worker.state === "redundant") reject(new Error("Couldn't enable notifications."));
-      });
-    });
+  if (legacy) {
+    await (await legacy.pushManager.getSubscription())?.unsubscribe();
+    await legacy.unregister();
+  }
+  const registration = await registerRootedWorker();
   const sub =
     (await registration.pushManager.getSubscription()) ??
     (await registration.pushManager.subscribe({

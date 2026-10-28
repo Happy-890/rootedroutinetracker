@@ -57,6 +57,27 @@
       "when": 1793232000000,
       "tag": "0007_profile_reminder_timezone",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793232000008,
+      "tag": "0008_timezone_and_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793232000009,
+      "tag": "0009_retryable_reminder_delivery",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793232000010,
+      "tag": "0010_verified_backup_restore",
+      "breakpoints": true
     }
   ]
 }

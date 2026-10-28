@@ -201,3 +201,13 @@ These are application checks, not a substitute for testing SQL migrations, real 
 Changes pushed to the Lovable-connected branch sync into the editor. Preserve published history: do not force-push or rewrite commits already synchronized with Lovable.
 
 Scheduled reminders use the timezone in Profile & account. Migration `0007_profile_reminder_timezone` makes that profile value authoritative at delivery time; existing reminder times and delivery claims are preserved.
+
+## Reminder reliability and backups
+
+The production build generates one root-scope worker at `/rooted-push-worker.js` for Web Push and public asset caching. `/sw.js` is a compatibility entry for older clients. API, authentication and private account responses are never cached; offline navigation shows a public reconnect page.
+
+Reminder deliveries use private leases, bounded retry attempts with backoff, and a short expiry window. Existing delivery claims are preserved during migration. Notification setup checks that the current account owns the device subscription; logout disconnects that device's notifications.
+
+Account exports include profile settings, activity, writing and reminders from one database snapshot. New exports are signed by the server and can be restored only into the account that created them. Restore merges missing records and keeps existing writing and reminders; profile settings come from the backup. Restore is atomic and verifies the signature before allowing the server to restore previously recorded historical activity. Ordinary clients cannot backdate scoring.
+
+Keep backup files private. Only newly exported, verified backups are supported by Restore backup; older unsigned files remain readable JSON exports. The current file-size limit is 10 MB. Signing uses `ROOTED_BACKUP_SIGNING_SECRET` when configured, otherwise the existing server-only `ROOTED_PUSH_SIGNING_SEED`; retain the signing secret to preserve backup verification. Device subscriptions and private signing keys are intentionally excluded from exports.

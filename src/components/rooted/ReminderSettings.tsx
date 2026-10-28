@@ -103,6 +103,21 @@ export function ReminderSettings() {
       active = false;
     };
   }, [r.mode, r.userId, reload]);
+  useEffect(() => {
+    if (r.mode !== "account") return;
+    const refreshDevice = () => {
+      if (document.visibilityState !== "visible") return;
+      void deviceSubscription()
+        .then((sub) => setDevice(!!sub))
+        .catch(() => setDevice(false));
+    };
+    window.addEventListener("focus", refreshDevice);
+    document.addEventListener("visibilitychange", refreshDevice);
+    return () => {
+      window.removeEventListener("focus", refreshDevice);
+      document.removeEventListener("visibilitychange", refreshDevice);
+    };
+  }, [r.mode, r.userId]);
   function edit(key: string, patch: Partial<Draft>) {
     setRows((current) =>
       current.map((row) => (row.key === key ? { ...row, ...patch, dirty: true } : row)),

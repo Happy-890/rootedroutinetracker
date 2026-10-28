@@ -1,4 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { toast } from "sonner";
+import { reconcileDeviceAccount, releaseDevice, unsubscribeDeviceLocally } from "./push-client";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   type Activity,
@@ -29,8 +40,16 @@ interface Ctx {
   save: SaveState;
   toggle: (a: Activity) => Promise<void>;
   setActivity: (a: Activity, on: boolean) => Promise<boolean>;
-  createEntry: (kind: EntryKind, subtype: string | null, content: Record<string, unknown>) => Promise<boolean>;
-  editEntry: (id: string, subtype: string | null, content: Record<string, unknown>) => Promise<boolean>;
+  createEntry: (
+    kind: EntryKind,
+    subtype: string | null,
+    content: Record<string, unknown>,
+  ) => Promise<boolean>;
+  editEntry: (
+    id: string,
+    subtype: string | null,
+    content: Record<string, unknown>,
+  ) => Promise<boolean>;
   saveProfile: (p: Profile) => Promise<boolean>;
   startGuest: () => void;
   signOut: () => Promise<void>;
@@ -81,6 +100,7 @@ export function RootedProvider({ children }: { children: ReactNode }) {
         setUserId(session.user.id);
         setEmail(session.user.email ?? null);
         setMode("account");
+        void reconcileDeviceAccount().catch(() => undefined);
         void loadFrom(new CloudRepo(session.user.id));
       } else if (localStorage.getItem(MODE_KEY) === "guest") {
         setUserId(null);
@@ -96,11 +116,15 @@ export function RootedProvider({ children }: { children: ReactNode }) {
       }
     };
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") void unsubscribeDeviceLocally().catch(() => undefined);
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
         queueMicrotask(() => apply(session));
       }
     });
-    supabase.auth.getUser().then(({ data }) => apply(data.user ? { user: data.user } : null)).catch(() => apply(null));
+    supabase.auth
+      .getUser()
+      .then(({ data }) => apply(data.user ? { user: data.user } : null))
+      .catch(() => apply(null));
     return () => {
       active = false;
       sub.subscription.unsubscribe();
@@ -154,9 +178,12 @@ export function RootedProvider({ children }: { children: ReactNode }) {
     [data, today, run],
   );
 
-  const toggle = useCallback(async (a: Activity) => {
-    await setActivity(a, !isDone(data, today, a));
-  }, [data, today, setActivity]);
+  const toggle = useCallback(
+    async (a: Activity) => {
+      await setActivity(a, !isDone(data, today, a));
+    },
+    [data, today, setActivity],
+  );
 
   const createEntry = useCallback(
     async (kind: EntryKind, subtype: string | null, content: Record<string, unknown>) => {
@@ -164,7 +191,15 @@ export function RootedProvider({ children }: { children: ReactNode }) {
       if (pending.current.has(key)) return false;
       pending.current.add(key);
       const ts = new Date().toISOString();
-      const entry: Entry = { id: newId(), kind, subtype, content, local_date: scoringDate(), created_at: ts, updated_at: ts };
+      const entry: Entry = {
+        id: newId(),
+        kind,
+        subtype,
+        content,
+        local_date: scoringDate(),
+        created_at: ts,
+        updated_at: ts,
+      };
       const ok = await run((r) => r.createEntry(entry));
       if (ok) setData((d) => applyNewEntry(d, entry));
       pending.current.delete(key);
@@ -202,10 +237,20 @@ export function RootedProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     localStorage.removeItem(MODE_KEY);
     if (mode === "account") {
+      try {
+        await releaseDevice();
+      } catch {
+        const message = "Couldn't disconnect this device's notifications. Try logging out again.";
+        setSave({ kind: "error", message });
+        toast.error(message);
+        return;
+      }
       const { error } = await supabase.auth.signOut();
-      if (error) { setSave({ kind: "error", message: error.message }); return; }
-    }
-    else {
+      if (error) {
+        setSave({ kind: "error", message: error.message });
+        return;
+      }
+    } else {
       repoRef.current = null;
       setMode("none");
       setData(emptyData());
@@ -238,8 +283,23 @@ export function RootedProvider({ children }: { children: ReactNode }) {
   }, [loadFrom]);
 
   const value: Ctx = {
-    mode, email, userId, data, dataError, today, save, toggle, setActivity, createEntry, editEntry,
-    saveProfile, startGuest, signOut, reload, guestImportAvailable, importGuest,
+    mode,
+    email,
+    userId,
+    data,
+    dataError,
+    today,
+    save,
+    toggle,
+    setActivity,
+    createEntry,
+    editEntry,
+    saveProfile,
+    startGuest,
+    signOut,
+    reload,
+    guestImportAvailable,
+    importGuest,
     draftNs: mode === "account" && userId ? `u:${userId}` : "guest",
   };
   return <C.Provider value={value}>{children}</C.Provider>;
@@ -263,10 +323,13 @@ export function useDraft<T>(key: string, initial: T): [T, (v: T) => void, () => 
     loaded.current = full;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [full]);
-  const set = useCallback((v: T) => {
-    setVal(v);
-    if (loaded.current === full) localStorage.setItem(full, JSON.stringify(v));
-  }, [full]);
+  const set = useCallback(
+    (v: T) => {
+      setVal(v);
+      if (loaded.current === full) localStorage.setItem(full, JSON.stringify(v));
+    },
+    [full],
+  );
   const clear = useCallback(() => {
     localStorage.removeItem(full);
     setVal(initial);

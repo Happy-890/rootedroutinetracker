@@ -283,6 +283,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      export_rooted_backup_data: { Args: never; Returns: Json }
+      claim_rooted_reminders_v3: {
+        Args: never
+        Returns: { device_id: string; reminder_id: string; user_id: string; endpoint: string; p256dh: string; auth: string; title: string; message: string; local_date: string; lease_token: string; attempt: number }[]
+      }
+      finish_rooted_delivery: {
+        Args: { p_reminder_id: string; p_device_id: string; p_local_date: string; p_lease_token: string; p_ok: boolean; p_retryable: boolean; p_status: number }
+        Returns: boolean
+      }
+      restore_rooted_backup: {
+        Args: { p_user_id: string; p_backup: Json }
+        Returns: Json
+      }
+
       claim_rooted_reminders: {
         Args: never
         Returns: {

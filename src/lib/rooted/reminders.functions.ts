@@ -86,9 +86,22 @@ export const registerDevice = createServerFn({ method: "POST" })
     );
     if (result.error)
       throw new Error(
-        "Couldn't enable this device. If another account used it, disable notifications there first.",
+        "Couldn't enable this device. Sign out of the other account on this device, then enable again.",
       );
     return { ok: true };
+  });
+export const ownsDevice = createServerFn({ method: "POST" })
+  .middleware([requireVerifiedAuth])
+  .inputValidator((input) => z.object({ endpoint: z.string().max(2048) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const result = await context.supabase
+      .from("push_devices")
+      .select("id")
+      .eq("user_id", context.userId)
+      .eq("endpoint", data.endpoint)
+      .maybeSingle();
+    if (result.error) throw new Error("Couldn't check notification setup.");
+    return { owned: !!result.data };
   });
 export const removeDevice = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])

@@ -1,3 +1,4 @@
+import { BackupSettings } from "@/components/rooted/BackupSettings";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -9,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useRooted } from "@/lib/rooted/store";
 import { isValidTimeZone } from "@/lib/rooted/logic";
 import { useAppearance, type Appearance } from "@/lib/rooted/appearance";
-import { Sun, Moon, Monitor, UserRound, Download, LogOut, Sprout, Check } from "lucide-react";
+import { Sun, Moon, Monitor, UserRound, LogOut, Sprout, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const r = useRooted();
+  const [backupRevision, setBackupRevision] = useState(0);
   const { appearance, setAppearance } = useAppearance();
   const appearanceOptions = [
     { value: "light", label: "Light", Icon: Sun },
@@ -124,16 +126,6 @@ function SettingsPage() {
       .finally(() => {
         pendingSaves.current--;
       });
-  }
-  function exportData() {
-    const blob = new Blob(
-      [JSON.stringify({ exported_at: new Date().toISOString(), ...r.data }, null, 2)],
-      { type: "application/json" },
-    );
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `rooted-backup-${r.today}.json`;
-    a.click();
   }
 
   return (
@@ -266,7 +258,7 @@ function SettingsPage() {
             </details>
           )}
         </section>
-        <ReminderSettings />
+        <ReminderSettings key={backupRevision} />
         <section className="space-y-3 border-t border-border py-5">
           <h2 className="font-extrabold">Data & backup</h2>
           <p className="text-sm text-muted-foreground">
@@ -274,10 +266,7 @@ function SettingsPage() {
               ? "Your writing and progress are private to your account."
               : "Guest data is stored only on this device."}
           </p>
-          <Button variant="secondary" className="w-full" onClick={exportData}>
-            <Download />
-            Export my data
-          </Button>
+          <BackupSettings onRestored={() => setBackupRevision((value) => value + 1)} />
           {r.mode === "account" && r.guestImportAvailable && (
             <div className="space-y-2 border-t border-border pt-3">
               <p className="text-sm text-muted-foreground">

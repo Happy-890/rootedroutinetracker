@@ -37,6 +37,7 @@ vi.mock("@tanstack/react-router", () => ({
     <a href={to}>{children}</a>
   ),
 }));
+vi.mock("@/lib/rooted/backup.functions", () => ({ exportBackup: vi.fn(), restoreBackup: vi.fn() }));
 vi.mock("@/lib/rooted/reminders.functions", () => ({
   loadScheduledReminders: mocks.load,
   saveScheduledReminder: mocks.save,
