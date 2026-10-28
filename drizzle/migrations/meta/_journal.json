@@ -50,6 +50,13 @@
       "when": 1792904596096,
       "tag": "0006_isolate_reminder_delivery_claims",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793232000000,
+      "tag": "0007_profile_reminder_timezone",
+      "breakpoints": true
     }
   ]
 }

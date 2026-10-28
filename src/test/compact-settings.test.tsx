@@ -64,6 +64,13 @@ const reminder = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
   mocks.records = {};
   mocks.subscription.mockResolvedValue(null);
   mocks.enable.mockResolvedValue({ endpoint: "https://web.push.apple.com/test" });
@@ -75,7 +82,10 @@ beforeEach(() => {
   mocks.save.mockImplementation(async ({ data }) => data);
   mocks.saveProfile.mockResolvedValue(true);
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("Compact settings", () => {
   it("replaces Enable with Manage and sends confirmation only after setup succeeds", async () => {
@@ -162,20 +172,39 @@ describe("Compact settings", () => {
     expect(screen.getByText("2 pts")).toBeInTheDocument();
     expect(screen.getByText("1/10")).toBeInTheDocument();
   });
-  it("shows saved reminders collapsed and preserves their existing timezone", async () => {
+  it("shows saved reminders collapsed and saves using the profile timezone", async () => {
     render(<ReminderSettings />);
     const edit = await screen.findByRole("button", { name: "Edit reminder 1" });
     expect(edit).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByText("Delivery log")).not.toBeInTheDocument();
     fireEvent.click(edit);
     expect(edit).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByLabelText("Reminder timezone")).toHaveValue("America/New_York");
+    expect(screen.queryByLabelText("Reminder timezone")).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Morning Prayer" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(edit).toHaveAttribute("aria-expanded", "false"));
     expect(mocks.save).toHaveBeenCalledWith({
-      data: expect.objectContaining({ title: "Morning Prayer", timezone: "America/New_York" }),
+      data: expect.objectContaining({ title: "Morning Prayer", timezone: "America/Chicago" }),
     });
+  });
+  it("keeps the pencil inside the banner and preserves multiline drafts when closed", async () => {
+    render(<ReminderSettings />);
+    const edit = await screen.findByRole("button", { name: "Edit reminder 1" });
+    expect(edit.closest("article")?.querySelector("img")?.parentElement).toContainElement(edit);
+    fireEvent.click(edit);
+    const message = screen.getByLabelText("Message");
+    expect(message.tagName).toBe("TEXTAREA");
+    fireEvent.change(message, { target: { value: "First line\nSecond line" } });
+    fireEvent.click(edit);
+    fireEvent.click(edit);
+    expect(message).toHaveValue("First line\nSecond line");
+    expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(mocks.save).toHaveBeenCalledWith({
+        data: expect.objectContaining({ message: "First line\nSecond line" }),
+      }),
+    );
   });
   it("keeps failed saves open with the draft intact", async () => {
     mocks.save.mockRejectedValue(new Error("Offline"));

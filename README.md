@@ -16,7 +16,7 @@ This README describes the code on `main` and the live application's `public` dat
 | Gratitude    | Three required items, saved as an entry.                                                                                                                                                                                                                                             |
 | Journal      | Free-Flow, Re-Frame with nine guided questions, and Devotional; drafts survive navigation and refresh.                                                                                                                                                                               |
 | History      | Date/type filtering, activity history, and entry viewing/editing.                                                                                                                                                                                                                    |
-| Settings     | Circular icon-only Light/Dark/Device menu, profile name/timezone auto-save on blur, account controls, expandable iOS-style reminder banners using the same icon as Web Push, notification testing, and JSON export. Server delivery logging continues; its Settings panel is hidden. |
+| Settings     | Circular icon-only Light/Dark/Device menu, profile name/timezone auto-save on blur, account controls, expandable iOS-style reminder banners using the same icon as Web Push, automatic setup confirmation and device notification instructions, and JSON export. Server delivery logging continues; its Settings panel is hidden. |
 | Accounts     | Supabase email/password authentication, password reset, managed Lovable social sign-in, and device-only guest mode.                                                                                                                                                                  |
 | Installation | PWA manifest, app icons, Safari Add to Home Screen guidance, offline shell, and Web Push worker.                                                                                                                                                                                     |
 
@@ -33,7 +33,7 @@ React 19, TypeScript, TanStack Start/Router, Vite, Tailwind CSS, shadcn/ui, Supa
 | `src/lib/rooted/logic.ts`               | Pure scoring, streaks, chart aggregation, calendar math, and validation helpers.              |
 | `src/lib/rooted/store.tsx`              | Shared account/guest state, save status, drafts, and focus/day rollover.                      |
 | `src/lib/rooted/repo.ts`                | Cloud and local repositories, paginated reads, and guest import.                              |
-| `src/lib/rooted/reminders.functions.ts` | Authenticated reminder CRUD, device registration, tests, and event-log reads.                 |
+| `src/lib/rooted/reminders.functions.ts` | Authenticated reminder CRUD, device registration, setup confirmation, and event-log reads.                 |
 | `src/lib/rooted/push.server.ts`         | Encrypted VAPID configuration and push delivery.                                              |
 | `src/integrations/supabase/`            | Browser/server clients, generated database types, and auth/cron helpers.                      |
 | `drizzle/migrations/`                   | Versioned SQL schema, constraints, policies, triggers, and RPCs.                              |
@@ -199,3 +199,5 @@ npm run lint
 These are application checks, not a substitute for testing SQL migrations, real RLS behavior, cross-account access, and push delivery against an isolated test backend. UI tests do not establish database security.
 
 Changes pushed to the Lovable-connected branch sync into the editor. Preserve published history: do not force-push or rewrite commits already synchronized with Lovable.
+
+Scheduled reminders use the timezone in Profile & account. Migration `0007_profile_reminder_timezone` makes that profile value authoritative at delivery time; existing reminder times and delivery claims are preserved.

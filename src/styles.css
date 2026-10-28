@@ -210,3 +210,17 @@ html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none;
 }
+
+/* Safari's native time field must shrink inside the reminder editor grid. */
+.rooted-reminder-time {
+  min-inline-size: 0;
+  inline-size: 100%;
+}
+.rooted-reminder-time::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+.rooted-reminder-time::-webkit-datetime-edit {
+  min-width: 0;
+  padding: 0;
+}

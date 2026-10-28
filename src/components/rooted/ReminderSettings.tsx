@@ -1,9 +1,10 @@
 import { NotificationBanner } from "./NotificationBanner";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell, Settings2, Plus, Trash2, Save, RefreshCw, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
@@ -17,6 +18,31 @@ import {
 import { scheduledReminderSchema } from "@/lib/rooted/push-validation";
 import { cn } from "@/lib/utils";
 import { deviceSubscription, enableDevice } from "@/lib/rooted/push-client";
+
+function ReminderMessage({ value, ...props }: React.ComponentProps<typeof Textarea>) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const field = ref.current;
+    if (!field) return;
+    const resize = () => {
+      field.style.height = "auto";
+      field.style.height = `${field.scrollHeight}px`;
+    };
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(field);
+    return () => observer.disconnect();
+  }, [value]);
+  return (
+    <Textarea
+      {...props}
+      value={value}
+      ref={ref}
+      rows={2}
+      className="min-w-0 resize-none overflow-hidden whitespace-pre-wrap break-words"
+    />
+  );
+}
 
 type Draft = {
   key: string;
@@ -75,8 +101,8 @@ export function ReminderSettings() {
     }
   }
   async function save(row: Draft, collapse = true) {
-    const parsed = scheduledReminderSchema.safeParse(row);
-    if (!parsed.success) throw new Error("Enter a title, message, valid time and timezone.");
+    const parsed = scheduledReminderSchema.safeParse({ ...row, timezone: r.data.profile.timezone });
+    if (!parsed.success) throw new Error("Enter a title, message and valid time.");
     const saved = await saveScheduledReminder({ data: parsed.data });
     setRows((current) =>
       current.map((item) =>
@@ -184,32 +210,30 @@ export function ReminderSettings() {
                       title={row.title}
                       message={row.message}
                       time={row.delivery_time}
+                      status={[!row.enabled && "Paused", row.dirty && "Unsaved"]
+                        .filter(Boolean)
+                        .join(" · ")}
+                      editControl={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 rounded-full"
+                          aria-label={`Edit reminder ${index + 1}`}
+                          aria-expanded={row.editing}
+                          aria-controls={`edit-${row.key}`}
+                          disabled={busy}
+                          onClick={() =>
+                            setRows((current) =>
+                              current.map((item) =>
+                                item.key === row.key ? { ...item, editing: !item.editing } : item,
+                              ),
+                            )
+                          }
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                      }
                     />
-                    <div className="flex items-center justify-end gap-1 px-2">
-                      {!row.enabled && (
-                        <p className="mr-auto text-[11px] text-muted-foreground">Paused</p>
-                      )}
-                      {row.dirty && (
-                        <p className="mr-auto text-[11px] text-muted-foreground">Unsaved</p>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Edit reminder ${index + 1}`}
-                        aria-expanded={row.editing}
-                        aria-controls={`edit-${row.key}`}
-                        disabled={busy}
-                        onClick={() =>
-                          setRows((current) =>
-                            current.map((item) =>
-                              item.key === row.key ? { ...item, editing: !item.editing } : item,
-                            ),
-                          )
-                        }
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                    </div>
                     <div
                       id={`edit-${row.key}`}
                       inert={!row.editing}
@@ -229,7 +253,7 @@ export function ReminderSettings() {
                               onCheckedChange={(enabled) => edit(row.key, { enabled })}
                             />
                           </div>
-                          <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] gap-3">
+                          <div className="grid min-w-0 grid-cols-1 gap-3 min-[360px]:grid-cols-[minmax(0,1fr)_minmax(0,7rem)]">
                             <div className="min-w-0 space-y-1">
                               <Label htmlFor={`title-${row.key}`}>Title</Label>
                               <Input
@@ -243,7 +267,7 @@ export function ReminderSettings() {
                             <div className="min-w-0 space-y-1">
                               <Label htmlFor={`time-${row.key}`}>Time</Label>
                               <Input
-                                className="min-w-0 px-2"
+                                className="rooted-reminder-time min-w-0 max-w-full px-2"
                                 id={`time-${row.key}`}
                                 type="time"
                                 value={row.delivery_time}
@@ -254,22 +278,12 @@ export function ReminderSettings() {
                           </div>
                           <div className="space-y-1">
                             <Label htmlFor={`message-${row.key}`}>Message</Label>
-                            <Input
+                            <ReminderMessage
                               id={`message-${row.key}`}
                               value={row.message}
                               maxLength={200}
                               disabled={busy}
                               onChange={(e) => edit(row.key, { message: e.target.value })}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor={`zone-${row.key}`}>Reminder timezone</Label>
-                            <Input
-                              id={`zone-${row.key}`}
-                              list="tzs"
-                              value={row.timezone}
-                              disabled={busy}
-                              onChange={(e) => edit(row.key, { timezone: e.target.value })}
                             />
                           </div>
                           <div className="flex items-center justify-between gap-2">
