@@ -51,7 +51,7 @@ export function ReminderStack({ children, editing }: { children: ReactNode; edit
       className={multiple ? "rooted-reminder-stack relative isolate" : "space-y-3"}
       style={
         multiple
-          ? { height: expanded ? total : (heights[0] ?? 0) + Math.min(cards.length - 1, 2) * 8 }
+          ? { height: expanded ? total : (heights[0] ?? 0) + Math.min(cards.length - 1, 2) * 10 }
           : undefined
       }
       data-expanded={expanded}
@@ -60,6 +60,9 @@ export function ReminderStack({ children, editing }: { children: ReactNode; edit
         const top = offset;
         offset += (heights[index] ?? 0) + 12;
         const layer = Math.min(index, 2);
+        // Anchor the visible bottom edges; text height must not swallow the peek.
+        const stackedTop = index === 0 ? 0 : (heights[0] ?? 0) - (heights[index] ?? 0) + layer * 10;
+        const clippedTop = Math.max(0, (heights[0] ?? 0) / 2 - stackedTop);
         return (
           <div
             key={typeof card === "object" && card !== null && "key" in card ? card.key : index}
@@ -78,13 +81,14 @@ export function ReminderStack({ children, editing }: { children: ReactNode; edit
                 ? {
                     zIndex: cards.length - index,
                     transform: expanded
-                      ? `translateY(${top}px) scale(1)`
-                      : `translateY(${layer * 8}px) scale(${1 - layer * 0.035})`,
+                      ? `translateY(${top}px) scaleX(1)`
+                      : `translateY(${stackedTop}px) scaleX(${1 - layer * 0.035})`,
                     opacity: expanded || index < 3 ? 1 : 0,
+                    filter: `brightness(${expanded ? 1 : 1 - layer * 0.06})`,
                     clipPath:
                       expanded || index === 0
-                        ? "inset(0 -100vw 0 -100vw)"
-                        : `inset(0 -100vw max(0px, calc(100% - ${heights[0] ?? 0}px)) -100vw)`,
+                        ? "inset(-16px -100vw -16px -100vw)"
+                        : `inset(${clippedTop}px -100vw -16px -100vw)`,
                   }
                 : undefined
             }
