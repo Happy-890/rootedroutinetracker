@@ -4,6 +4,9 @@ import type { ComponentType } from "react";
 
 const mocks = vi.hoisted(() => ({
   save: vi.fn(),
+  subscription: vi.fn(),
+  enable: vi.fn(),
+  confirmation: vi.fn(),
   load: vi.fn(),
   saveProfile: vi.fn(),
   setAppearance: vi.fn(),
@@ -38,12 +41,11 @@ vi.mock("@/lib/rooted/reminders.functions", () => ({
   loadScheduledReminders: mocks.load,
   saveScheduledReminder: mocks.save,
   deleteScheduledReminder: vi.fn(),
-  testReminder: vi.fn(),
+  sendNotificationConfirmation: mocks.confirmation,
 }));
 vi.mock("@/lib/rooted/push-client", () => ({
-  deviceSubscription: async () => null,
-  enableDevice: vi.fn(),
-  disableDevice: vi.fn(),
+  deviceSubscription: mocks.subscription,
+  enableDevice: mocks.enable,
 }));
 import { ReminderSettings } from "@/components/rooted/ReminderSettings";
 import { formatReminderTime } from "@/lib/rooted/reminder-time";
@@ -63,6 +65,9 @@ const reminder = {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.records = {};
+  mocks.subscription.mockResolvedValue(null);
+  mocks.enable.mockResolvedValue({ endpoint: "https://web.push.apple.com/test" });
+  mocks.confirmation.mockResolvedValue({ ok: true });
   HTMLElement.prototype.scrollIntoView = vi.fn();
   HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
   HTMLElement.prototype.releasePointerCapture = vi.fn();
@@ -73,6 +78,64 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("Compact settings", () => {
+  it("replaces Enable with Manage and sends confirmation only after setup succeeds", async () => {
+    render(<ReminderSettings />);
+    const enable = await screen.findByRole("button", { name: "Enable" });
+    await waitFor(() => expect(enable).toBeEnabled());
+    fireEvent.click(enable);
+    const manage = await screen.findByRole("button", { name: "Manage notifications" });
+    expect(mocks.confirmation).toHaveBeenCalledExactlyOnceWith({
+      data: { endpoint: "https://web.push.apple.com/test" },
+    });
+    await waitFor(() => expect(manage).toBeEnabled());
+    fireEvent.click(manage);
+    expect(await screen.findByRole("dialog")).toHaveTextContent(
+      "Settings → Notifications → Rooted",
+    );
+    expect(mocks.confirmation).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Disable" })).not.toBeInTheDocument();
+  });
+  it("does not send a confirmation when setup fails", async () => {
+    mocks.enable.mockRejectedValueOnce(new Error("Permission denied"));
+    render(<ReminderSettings />);
+    const enable = await screen.findByRole("button", { name: "Enable" });
+    await waitFor(() => expect(enable).toBeEnabled());
+    fireEvent.click(enable);
+    await waitFor(() => expect(mocks.enable).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(enable).toBeEnabled());
+    expect(mocks.confirmation).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Manage notifications" })).not.toBeInTheDocument();
+  });
+  it("keeps setup enabled if confirmation delivery fails and does not resend on load", async () => {
+    mocks.confirmation.mockRejectedValueOnce(new Error("Push failed"));
+    render(<ReminderSettings />);
+    const enable = await screen.findByRole("button", { name: "Enable" });
+    await waitFor(() => expect(enable).toBeEnabled());
+    fireEvent.click(enable);
+    const manage = await screen.findByRole("button", { name: "Manage notifications" });
+    await waitFor(() => expect(manage).toBeEnabled());
+    cleanup();
+    mocks.subscription.mockResolvedValue({ endpoint: "existing" });
+    render(<ReminderSettings />);
+    await screen.findByRole("button", { name: "Manage notifications" });
+    expect(mocks.confirmation).toHaveBeenCalledTimes(1);
+  });
+  it("offers only the pencil below a banner and saves pause changes from its editor", async () => {
+    render(<ReminderSettings />);
+    const edit = await screen.findByRole("button", { name: "Edit reminder 1" });
+    expect(screen.queryByRole("button", { name: /Test/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("switch").closest("[inert]")).not.toBeNull();
+    fireEvent.click(edit);
+    fireEvent.click(screen.getByRole("switch", { name: "Reminder enabled" }));
+    expect(mocks.save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(mocks.save).toHaveBeenCalledWith({
+        data: expect.objectContaining({ enabled: false }),
+      }),
+    );
+    expect(await screen.findByText("Paused")).toBeInTheDocument();
+  });
   it("opens an icon-only appearance menu with accessible choices", async () => {
     render(<Settings />);
     const trigger = screen.getByRole("button", { name: "Appearance: Device" });

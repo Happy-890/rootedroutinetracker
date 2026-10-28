@@ -200,3 +200,13 @@
     animation: none;
   }
 }
+
+/* Keep page scrolling available without the visible side scrollbar. */
+html,
+body {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}

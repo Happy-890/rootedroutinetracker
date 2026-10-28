@@ -1,21 +1,22 @@
 import { NotificationBanner } from "./NotificationBanner";
 import { useEffect, useState } from "react";
-import { Bell, BellOff, Plus, Trash2, Save, Send, RefreshCw, Pencil } from "lucide-react";
+import { Bell, Settings2, Plus, Trash2, Save, RefreshCw, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { useRooted } from "@/lib/rooted/store";
 import {
   loadScheduledReminders,
   saveScheduledReminder,
   deleteScheduledReminder,
-  testReminder,
+  sendNotificationConfirmation,
 } from "@/lib/rooted/reminders.functions";
 import { scheduledReminderSchema } from "@/lib/rooted/push-validation";
 import { cn } from "@/lib/utils";
-import { deviceSubscription, enableDevice, disableDevice } from "@/lib/rooted/push-client";
+import { deviceSubscription, enableDevice } from "@/lib/rooted/push-client";
 
 type Draft = {
   key: string;
@@ -35,6 +36,7 @@ export function ReminderSettings() {
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [device, setDevice] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
   const [reload, setReload] = useState(0);
   useEffect(() => {
     let active = true;
@@ -114,21 +116,48 @@ export function ReminderSettings() {
               size="sm"
               disabled={!ready || busy}
               onClick={() =>
-                void run(async () => {
-                  if (device) {
-                    await disableDevice();
-                    setDevice(false);
-                  } else {
-                    await enableDevice();
-                    setDevice(true);
-                  }
-                })
+                device
+                  ? setManageOpen(true)
+                  : void run(async () => {
+                      const sub = await enableDevice();
+                      setDevice(true);
+                      try {
+                        await sendNotificationConfirmation({ data: { endpoint: sub.endpoint } });
+                      } catch {
+                        toast.warning(
+                          "Notifications are enabled, but the confirmation couldn't be delivered.",
+                        );
+                      }
+                    })
               }
             >
-              {device ? <BellOff /> : <Bell />}
-              {device ? "Disable" : "Enable"}
+              {device ? <Settings2 /> : <Bell />}
+              {device ? "Manage notifications" : "Enable"}
             </Button>
           </div>
+          <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+            <DialogContent className="w-[calc(100%-2rem)] rounded-2xl motion-reduce:animate-none">
+              <DialogTitle>Manage notifications</DialogTitle>
+              <DialogDescription>
+                Change notification permissions, sounds, and alerts in your device settings.
+              </DialogDescription>
+              <div className="space-y-3 text-sm">
+                <p>
+                  <strong>On iPhone or iPad:</strong> Open Settings → Notifications → Rooted. Turn
+                  Allow Notifications on or off, or choose where alerts appear. If you renamed
+                  Rooted on your Home Screen, look for that name.
+                </p>
+                <p>
+                  <strong>On other devices:</strong> Open your browser’s site settings for Rooted
+                  and change the notification permission.
+                </p>
+                <p className="text-muted-foreground">
+                  This affects this device. To pause one reminder, tap its pencil, turn off Reminder
+                  enabled, then Save.
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
           {failed ? (
             <div className="flex items-center justify-between gap-2 text-sm text-destructive">
               Couldn't load reminders.
@@ -157,23 +186,12 @@ export function ReminderSettings() {
                       time={row.delivery_time}
                     />
                     <div className="flex items-center justify-end gap-1 px-2">
+                      {!row.enabled && (
+                        <p className="mr-auto text-[11px] text-muted-foreground">Paused</p>
+                      )}
                       {row.dirty && (
                         <p className="mr-auto text-[11px] text-muted-foreground">Unsaved</p>
                       )}
-                      <Switch
-                        aria-label={`Enable ${row.title || "reminder"}`}
-                        checked={row.enabled}
-                        disabled={busy}
-                        onCheckedChange={(enabled) =>
-                          void run(async () => {
-                            if (!row.id || row.dirty) {
-                              edit(row.key, { enabled });
-                              return;
-                            }
-                            await save({ ...row, enabled }, false);
-                          })
-                        }
-                      />
                       <Button
                         variant="ghost"
                         size="icon"
@@ -191,26 +209,6 @@ export function ReminderSettings() {
                       >
                         <Pencil className="size-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label={`Test reminder ${index + 1}`}
-                        title="Send test notification"
-                        disabled={busy || !device || !row.id || row.dirty}
-                        onClick={() =>
-                          void run(async () => {
-                            const sub = await deviceSubscription();
-                            if (!sub || !row.id) throw new Error("Enable this device first.");
-                            await testReminder({
-                              data: { endpoint: sub.endpoint, reminder_id: row.id },
-                            });
-                            toast.success("Test sent to this device");
-                          })
-                        }
-                      >
-                        <Send className="size-3.5" />
-                        Test
-                      </Button>
                     </div>
                     <div
                       id={`edit-${row.key}`}
@@ -222,6 +220,15 @@ export function ReminderSettings() {
                     >
                       <div className="min-h-0 overflow-hidden">
                         <div className="space-y-3 border-t border-border pt-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <Label htmlFor={`enabled-${row.key}`}>Reminder enabled</Label>
+                            <Switch
+                              id={`enabled-${row.key}`}
+                              checked={row.enabled}
+                              disabled={busy}
+                              onCheckedChange={(enabled) => edit(row.key, { enabled })}
+                            />
+                          </div>
                           <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] gap-3">
                             <div className="min-w-0 space-y-1">
                               <Label htmlFor={`title-${row.key}`}>Title</Label>
