@@ -1,6 +1,6 @@
-import { formatReminderTime } from "@/lib/rooted/reminder-time";
+import { NotificationBanner } from "./NotificationBanner";
 import { useEffect, useState } from "react";
-import { Bell, BellOff, Plus, Trash2, Save, Send, RefreshCw, Pencil, Sprout } from "lucide-react";
+import { Bell, BellOff, Plus, Trash2, Save, Send, RefreshCw, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,34 +149,17 @@ export function ReminderSettings() {
                   <article
                     key={row.key}
                     aria-label={`Reminder ${index + 1}`}
-                    className="rounded-2xl border border-border/60 bg-card/90 p-3 shadow-sm backdrop-blur-xl"
+                    className="space-y-1.5"
                   >
-                    <div className="flex items-start gap-2.5">
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gold-soft">
-                        <Sprout className="size-5 text-gold" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="min-w-0 break-words text-sm font-bold leading-tight">
-                            {row.title || "New reminder"}
-                          </h3>
-                          <time
-                            dateTime={row.delivery_time}
-                            className="shrink-0 text-xs text-muted-foreground"
-                          >
-                            {formatReminderTime(row.delivery_time)}
-                          </time>
-                        </div>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          from Rooted · {row.timezone}
-                          {row.dirty ? " · Unsaved" : ""}
-                        </p>
-                        <p className="mt-1 line-clamp-2 break-words text-sm leading-snug">
-                          {row.message}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-1 flex items-center justify-end gap-1">
+                    <NotificationBanner
+                      title={row.title}
+                      message={row.message}
+                      time={row.delivery_time}
+                    />
+                    <div className="flex items-center justify-end gap-1 px-2">
+                      {row.dirty && (
+                        <p className="mr-auto text-[11px] text-muted-foreground">Unsaved</p>
+                      )}
                       <Switch
                         aria-label={`Enable ${row.title || "reminder"}`}
                         checked={row.enabled}
