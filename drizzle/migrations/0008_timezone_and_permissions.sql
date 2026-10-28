@@ -9,6 +9,7 @@ BEGIN
  END IF;
  RETURN NEW;
 END $$;
+DROP TRIGGER IF EXISTS validate_rooted_profile_timezone ON public.profiles;
 CREATE TRIGGER validate_rooted_profile_timezone BEFORE INSERT OR UPDATE OF timezone ON public.profiles
 FOR EACH ROW EXECUTE FUNCTION public.validate_rooted_profile_timezone();
 REVOKE ALL ON FUNCTION public.validate_rooted_profile_timezone() FROM PUBLIC,anon,authenticated;

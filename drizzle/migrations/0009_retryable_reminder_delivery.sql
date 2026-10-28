@@ -1,14 +1,14 @@
 -- Existing claims remain delivered: upgrades must never replay old notifications.
 ALTER TABLE public.reminder_delivery_claims
- ADD COLUMN status text NOT NULL DEFAULT 'sent' CHECK(status IN ('pending','sent','failed')),
- ADD COLUMN attempts integer NOT NULL DEFAULT 0,
- ADD COLUMN next_attempt_at timestamptz,
- ADD COLUMN expires_at timestamptz,
- ADD COLUMN lease_token uuid,
- ADD COLUMN lease_until timestamptz,
- ADD COLUMN last_status integer,
- ADD COLUMN sent_at timestamptz;
-CREATE INDEX rooted_pending_deliveries ON public.reminder_delivery_claims(next_attempt_at)
+ ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'sent' CHECK(status IN ('pending','sent','failed')),
+ ADD COLUMN IF NOT EXISTS attempts integer NOT NULL DEFAULT 0,
+ ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz,
+ ADD COLUMN IF NOT EXISTS expires_at timestamptz,
+ ADD COLUMN IF NOT EXISTS lease_token uuid,
+ ADD COLUMN IF NOT EXISTS lease_until timestamptz,
+ ADD COLUMN IF NOT EXISTS last_status integer,
+ ADD COLUMN IF NOT EXISTS sent_at timestamptz;
+CREATE INDEX IF NOT EXISTS rooted_pending_deliveries ON public.reminder_delivery_claims(next_attempt_at)
 WHERE status='pending';
 
 CREATE OR REPLACE FUNCTION public.claim_rooted_reminders_v3()
