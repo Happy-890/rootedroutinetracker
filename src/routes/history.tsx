@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/rooted/Shell";
+import { ArchiveDateFilter } from "@/components/rooted/ArchiveDateFilter";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useRooted } from "@/lib/rooted/store";
@@ -64,7 +66,7 @@ function Activity() {
 }
 
 function Archives({ kind, setKind }: { kind: Search["kind"]; setKind: (k: Search["kind"]) => void }) {
-  const { data } = useRooted();
+  const { data, today } = useRooted();
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const list = data.entries
@@ -74,11 +76,17 @@ function Archives({ kind, setKind }: { kind: Search["kind"]; setKind: (k: Search
   return (
     <div>
       <div className="grid grid-cols-2 gap-2">
-        <select aria-label="Type" value={kind} onChange={(e) => setKind(e.target.value as Search["kind"])} className="col-span-2 h-11 rounded-lg border bg-card px-2">
-          <option value="all">All</option><option value="learn">Learn</option><option value="gratitude">Gratitude</option><option value="journal">Journal</option>
-        </select>
-        <input aria-label="From date" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-11 w-full min-w-0 rounded-lg border bg-card px-2 text-sm" />
-        <input aria-label="To date" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-11 w-full min-w-0 rounded-lg border bg-card px-2 text-sm" />
+        <Select value={kind} onValueChange={(value) => setKind(value as Search["kind"])}>
+          <SelectTrigger aria-label="Entry type" className="col-span-2 h-11 rounded-2xl border-border bg-card px-4 font-semibold">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent sideOffset={6} className="rooted-menu-motion rounded-2xl">
+            <SelectItem value="all" className="min-h-11 rounded-xl">All</SelectItem><SelectItem value="learn" className="min-h-11 rounded-xl">Learn</SelectItem>
+            <SelectItem value="gratitude" className="min-h-11 rounded-xl">Gratitude</SelectItem><SelectItem value="journal" className="min-h-11 rounded-xl">Journal</SelectItem>
+          </SelectContent>
+        </Select>
+        <ArchiveDateFilter label="From" value={from} onChange={setFrom} today={today} max={to || today} />
+        <ArchiveDateFilter label="To" value={to} onChange={setTo} today={today} min={from} align="end" />
       </div>
       {list.length === 0 ? <p className="mt-4 rounded-3xl bg-card p-6 text-center text-muted-foreground">No entries found.</p> : (
         <ul className="mt-3 space-y-2">{list.map((e) => <EntryItem key={e.id} e={e} />)}</ul>
