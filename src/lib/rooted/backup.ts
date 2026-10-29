@@ -1,3 +1,4 @@
+import { growthRecordSchema } from "./growth";
 import { z } from "zod";
 import { isValidTimeZone } from "./logic";
 import { scheduledReminderSchema } from "./push-validation";
@@ -23,6 +24,7 @@ const activity = z.enum([
 ]);
 export const backupBodySchema = z
   .object({
+    growth: z.array(growthRecordSchema).max(50000).optional(),
     format: z.literal("rooted-backup"),
     version: z.literal(2),
     owner_id: z.string().uuid(),

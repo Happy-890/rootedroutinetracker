@@ -8,7 +8,7 @@ export const exportBackup = createServerFn({ method: "GET" })
   .middleware([requireVerifiedAuth])
   .handler(async ({ context }) => {
     // One database snapshot keeps writing and its awarded activity consistent.
-    const result = await context.supabase.rpc("export_rooted_backup_data");
+    const result = await context.supabase.rpc("export_rooted_growth_backup_data");
     if (
       result.error ||
       !result.data ||

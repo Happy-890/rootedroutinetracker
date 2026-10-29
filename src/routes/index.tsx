@@ -1,3 +1,5 @@
+import { PillarCommitments } from "@/components/rooted/GrowthTools";
+import { growthRecord } from "@/lib/rooted/growth";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Check,
@@ -62,6 +64,8 @@ const ICONS: Record<PillarId, { icon: typeof Cross; color: string }> = {
 };
 
 function Home() {
+  const r = useRooted();
+  const priorities = growthRecord(r.data, "priorities", r.today)?.value ?? [];
   return (
     <Shell>
       <ProgressCard />
@@ -78,6 +82,7 @@ function Home() {
         <BonusButton to="/gratitude" activity="gratitude" label="Add Gratitude" icon={Sparkles} />
         <BonusButton to="/journal" activity="journal" label="Add Journal" icon={NotebookPen} />
       </div>
+      <Link to="/finance" search={{tab: "plan"}} className="mt-3 block py-2 text-center text-sm font-semibold text-primary">{priorities.length ? `Today's priorities · ${priorities.filter((p) => p.done).length}/${priorities.length} complete` : "Choose today's priorities"}</Link>
     </Shell>
   );
 }
@@ -177,6 +182,7 @@ function PillarCard({ id }: { id: PillarId }) {
         <div className="flex min-w-0 items-center gap-1.5">
           <Icon className={cn("size-[18px] shrink-0", color)} strokeWidth={2.5} />
           <h3 className="truncate text-[15px] font-extrabold">{p.name}</h3>
+          <PillarCommitments id={id} />
         </div>
         <span
           className="shrink-0 text-xs font-extrabold text-teal"

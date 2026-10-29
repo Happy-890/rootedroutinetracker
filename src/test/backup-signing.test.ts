@@ -62,3 +62,30 @@ it("accepts reordered JSON keys without weakening integrity", async () => {
   const reordered = Object.fromEntries(Object.entries(signed.body).reverse());
   expect(await verifyBackup(JSON.stringify({ ...signed, body: reordered }), owner)).toEqual(body);
 });
+it("round trips growth tools and rejects tampered priorities", async () => {
+  const extended: BackupBody = {
+    ...body,
+    growth: [
+      {
+        kind: "definitions",
+        key: "personal",
+        value: { why: "Family", habits: { exercise: "Walk" } },
+      },
+      {
+        kind: "review",
+        key: "2026-10-26",
+        value: { worked: "", obstacle: "", change: "", commitment: "Walk after dinner" },
+      },
+      {
+        kind: "priorities",
+        key: "2026-10-28",
+        value: [{ title: "Walk", pillar: "fitness", when: "After dinner", done: false }],
+      },
+    ],
+  };
+  const signed = await signBackup(extended);
+  expect(await verifyBackup(JSON.stringify(signed), owner)).toEqual(extended);
+  await expect(
+    verifyBackup(JSON.stringify({ ...signed, body: { ...extended, growth: [] } }), owner),
+  ).rejects.toThrow("verified Rooted backup");
+});

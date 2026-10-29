@@ -84,7 +84,7 @@ export function BackupSettings({ onRestored }: { onRestored: () => void }) {
             Restore backup
           </Button>
           <p className="mt-2 text-xs text-muted-foreground">
-            Backups include your writing, activity, profile and reminders. Restore uses a verified
+            Backups include your writing, activity, profile, reminders, reviews, priorities and commitments. Restore uses a verified
             backup exported here for this account. Keep the file private.
           </p>
         </>

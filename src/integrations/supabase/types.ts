@@ -14,6 +14,13 @@ export type Database = {
   }
   public: {
     Tables: {
+      growth_records: {
+        Row: { user_id: string; kind: string; key: string; value: Json }
+        Insert: { user_id: string; kind: string; key: string; value: Json }
+        Update: { value?: Json }
+        Relationships: []
+      }
+
       activity_records: {
         Row: {
           activity: string
@@ -283,6 +290,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      save_rooted_growth: { Args: { p_kind: string; p_key: string; p_value: Json }; Returns: undefined }
+      import_rooted_growth: { Args: { p_records: Json }; Returns: undefined }
+      export_rooted_growth_backup_data: { Args: never; Returns: Json }
+
       export_rooted_backup_data: { Args: never; Returns: Json }
       claim_rooted_reminders_v3: {
         Args: never

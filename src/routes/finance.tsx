@@ -1,3 +1,4 @@
+import { DailyPriorities } from "@/components/rooted/GrowthTools";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useState } from "react";
@@ -45,7 +46,7 @@ function Finance() {
           </Link>
         ))}
       </div>
-      <div className="mt-4">{tab === "learn" ? <Learn /> : <Plan />}</div>
+      <div className="mt-4">{tab === "learn" ? <Learn /> : <div className="space-y-4"><DailyPriorities /><Plan /></div>}</div>
     </Shell>
   );
 }
@@ -125,7 +126,7 @@ function Plan() {
     <div className="space-y-3 rounded-2xl bg-card p-3.5">
       <h2 className="text-base font-extrabold">Plan your day</h2>
       <Row k="cal" label="Review your calendar for the day." on={cal} />
-      <Row k="quests" label="Review all your quests." on={quests} />
+      <Row k="quests" label="Review my priorities above." on={quests} />
       <SaveStatus />
       {done ? (
         <p className="rounded-xl bg-gold-soft p-2.5 text-center text-sm font-bold text-primary">Plan complete for today ✓</p>

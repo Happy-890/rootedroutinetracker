@@ -1,3 +1,5 @@
+import { growthRecordSchema, putGrowth, type GrowthRecord } from "./growth";
+import type { Json } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import {
   type Activity,
@@ -19,6 +21,7 @@ export interface Repo {
   createEntry(entry: Entry): Promise<void>;
   editEntry(id: string, subtype: string | null, content: Record<string, unknown>): Promise<void>;
   saveProfile(p: Profile): Promise<void>;
+  saveGrowth(record: GrowthRecord): Promise<void>;
 }
 
 export const GUEST_KEY = "rooted:guest:v1";
@@ -59,6 +62,9 @@ export class LocalRepo implements Repo {
   async editEntry(id: string, subtype: string | null, content: Record<string, unknown>) {
     this.write(applyEntryEdit(this.read(), id, { subtype, content }, new Date().toISOString()));
   }
+  async saveGrowth(record: GrowthRecord) {
+    this.write(putGrowth(this.read(), growthRecordSchema.parse(record)));
+  }
   async saveProfile(p: Profile) {
     this.write({ ...this.read(), profile: p });
   }
@@ -75,10 +81,11 @@ export class CloudRepo implements Repo {
   constructor(private userId: string) {}
   async load(): Promise<RootedData> {
     offlineGuard();
-    const [p, r, e] = await Promise.all([
+    const [p, r, e, growth] = await Promise.all([
       supabase.from("profiles").select("display_name,timezone").eq("id", this.userId).maybeSingle(),
       this.loadRecords(),
       this.loadEntries(),
+      this.loadGrowth(),
     ]);
     if (p.error) throw p.error;
     if (r.error) throw r.error;
@@ -86,6 +93,7 @@ export class CloudRepo implements Repo {
     const records: Record<string, true> = {};
     for (const row of r.data ?? []) records[recordKey(row.local_date, row.activity as Activity)] = true;
     return {
+      growth,
       records,
       entries: (e.data ?? []).map((x) => ({
         id: x.id,
@@ -98,6 +106,21 @@ export class CloudRepo implements Repo {
       })),
       profile: p.data ?? { display_name: "", timezone: "America/Chicago" },
     };
+  }
+  private async loadGrowth(): Promise<GrowthRecord[]> {
+    const rows: GrowthRecord[] = [];
+    for (let offset = 0; ; offset += 1000) {
+      const { data, error } = await supabase.from("growth_records").select("kind,key,value").eq("user_id", this.userId).order("kind").order("key").range(offset, offset + 999);
+      if (error) throw error;
+      rows.push(...data.map((row) => growthRecordSchema.parse(row)));
+      if (data.length < 1000) return rows;
+    }
+  }
+  async saveGrowth(record: GrowthRecord) {
+    offlineGuard();
+    const row = growthRecordSchema.parse(record);
+    const { error } = await supabase.rpc("save_rooted_growth", { p_kind: row.kind, p_key: row.key, p_value: row.value as Json });
+    if (error) throw error;
   }
   private async loadRecords() {
     const rows = [];
@@ -172,6 +195,11 @@ export class CloudRepo implements Repo {
   /** One-time, non-destructive import of device data; duplicates are ignored. */
   async importGuest(g: RootedData) {
     offlineGuard();
+    const growth = (g.growth ?? []).map((record) => growthRecordSchema.parse(record));
+    if (growth.length) {
+      const { error } = await supabase.rpc("import_rooted_growth", { p_records: growth as unknown as Json });
+      if (error) throw error;
+    }
     const today = scoringDate();
     const recs = Object.keys(g.records).flatMap((k) => {
       const [local_date, activity] = k.split("|");

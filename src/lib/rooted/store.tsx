@@ -1,3 +1,4 @@
+import { putGrowth, type GrowthRecord } from "./growth";
 import { toast } from "sonner";
 import { reconcileDeviceAccount, releaseDevice, unsubscribeDeviceLocally } from "./push-client";
 import {
@@ -36,6 +37,7 @@ interface Ctx {
   userId: string | null;
   data: RootedData;
   dataError: string | null;
+  dataReady: boolean;
   today: string;
   save: SaveState;
   toggle: (a: Activity) => Promise<void>;
@@ -51,6 +53,7 @@ interface Ctx {
     content: Record<string, unknown>,
   ) => Promise<boolean>;
   saveProfile: (p: Profile) => Promise<boolean>;
+  saveGrowth: (record: GrowthRecord) => Promise<boolean>;
   startGuest: () => void;
   signOut: () => Promise<void>;
   reload: () => Promise<void>;
@@ -68,6 +71,7 @@ export function RootedProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [data, setData] = useState<RootedData>(emptyData());
+  const [dataReady, setDataReady] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
   const [save, setSave] = useState<SaveState>({ kind: "idle" });
   const [now, setNow] = useState(() => new Date());
@@ -78,11 +82,13 @@ export function RootedProvider({ children }: { children: ReactNode }) {
   const today = scoringDate(now);
 
   const loadFrom = useCallback(async (repo: Repo) => {
+    if (repoRef.current !== repo) setDataReady(false);
     repoRef.current = repo;
     try {
       const loaded = await repo.load();
       if (repoRef.current !== repo) return;
       setData(loaded);
+      setDataReady(true);
       setDataError(null);
     } catch (e) {
       if (repoRef.current !== repo) return;
@@ -226,6 +232,18 @@ export function RootedProvider({ children }: { children: ReactNode }) {
     [run],
   );
 
+  const saveGrowth = useCallback(async (record: GrowthRecord) => {
+    const repo = repoRef.current;
+    const key = `growth|${record.kind}|${record.key}`;
+    if (!repo || pending.current.has(key)) return false;
+    pending.current.add(key);
+    try {
+      const ok = await run((r) => r.saveGrowth(record));
+      if (ok && repoRef.current === repo) setData((d) => putGrowth(d, record));
+      return ok && repoRef.current === repo;
+    } finally { pending.current.delete(key); }
+  }, [run]);
+
   const startGuest = useCallback(() => {
     localStorage.setItem(MODE_KEY, "guest");
     setMode("guest");
@@ -262,7 +280,7 @@ export function RootedProvider({ children }: { children: ReactNode }) {
     if (mode !== "account" || !userId || typeof localStorage === "undefined") return false;
     if (localStorage.getItem(migratedKey(userId))) return false;
     const g = readGuest();
-    return !!g && (Object.keys(g.records).length > 0 || g.entries.length > 0);
+    return !!g && (Object.keys(g.records).length > 0 || g.entries.length > 0 || !!g.growth?.length);
   }, [mode, userId, importTick]);
 
   const importGuest = useCallback(async () => {
@@ -288,6 +306,7 @@ export function RootedProvider({ children }: { children: ReactNode }) {
     userId,
     data,
     dataError,
+    dataReady,
     today,
     save,
     toggle,
@@ -295,6 +314,7 @@ export function RootedProvider({ children }: { children: ReactNode }) {
     createEntry,
     editEntry,
     saveProfile,
+    saveGrowth,
     startGuest,
     signOut,
     reload,

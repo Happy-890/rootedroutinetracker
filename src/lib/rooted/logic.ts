@@ -1,3 +1,4 @@
+import type { GrowthRecord } from "./growth";
 // Pure, framework-free rules for Rooted. Everything date-related works on
 // local calendar strings (YYYY-MM-DD) derived from an IANA timezone, never on
 // elapsed hours, so DST and UTC offsets cannot shift a day.
@@ -58,6 +59,7 @@ export interface RootedData {
   records: Record<string, true>;
   entries: Entry[];
   profile: Profile;
+  growth?: GrowthRecord[];
 }
 
 export const DEFAULT_TZ = "America/Chicago";
@@ -74,7 +76,7 @@ export function reminderDue(timezone: string, deliveryTime: string, lastSent: st
 }
 
 export function emptyData(): RootedData {
-  return { records: {}, entries: [], profile: { display_name: "", timezone: DEFAULT_TZ } };
+  return { records: {}, entries: [], growth: [], profile: { display_name: "", timezone: DEFAULT_TZ } };
 }
 
 export const recordKey = (date: string, a: Activity) => `${date}|${a}`;
@@ -285,7 +287,7 @@ export function mergeData(target: RootedData, incoming: RootedData): RootedData 
   const records = { ...incoming.records, ...target.records };
   const ids = new Set(target.entries.map((e) => e.id));
   const entries = [...target.entries, ...incoming.entries.filter((e) => !ids.has(e.id))];
-  return { ...target, records, entries };
+  return { ...target, records, entries, growth: [...(target.growth ?? []), ...(incoming.growth ?? []).filter((r) => !(target.growth ?? []).some((t) => t.kind === r.kind && t.key === r.key))] };
 }
 
 export function newId(): string {

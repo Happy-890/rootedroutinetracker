@@ -211,3 +211,13 @@ Reminder deliveries use private leases, bounded retry attempts with backoff, and
 Account exports include profile settings, activity, writing and reminders from one database snapshot. New exports are signed by the server and can be restored only into the account that created them. Restore merges missing records and keeps existing writing and reminders; profile settings come from the backup. Restore is atomic and verifies the signature before allowing the server to restore previously recorded historical activity. Ordinary clients cannot backdate scoring.
 
 Keep backup files private. Only newly exported, verified backups are supported by Restore backup; older unsigned files remain readable JSON exports. The current file-size limit is 10 MB. Signing uses `ROOTED_BACKUP_SIGNING_SECRET` when configured, otherwise the existing server-only `ROOTED_PUSH_SIGNING_SEED`; retain the signing secret to preserve backup verification. Device subscriptions and private signing keys are intentionally excluded from exports.
+
+## Weekly review, priorities and habit commitments
+
+History includes a Monday–Sunday weekly review with separate pillar completion totals, a comparison to the previous recorded week, three reflection prompts and one commitment for the following week. Current-week totals are explicitly partial. Reviews do not earn points.
+
+Finance → Plan supports up to three daily priorities, each with an optional pillar and an action cue. Save after editing or checking off priorities. Each Central-time day starts fresh, and saved past priorities appear in daily History. The previous week's review commitment appears in Plan. The existing ten-point scoring system is unchanged.
+
+Settings → My habit commitments stores a personal reason and optional definitions for the eight pillar habits. Home's pillar info buttons show saved definitions or clearly editable example commitments. Text drafts survive navigation and failed saves and are isolated by account.
+
+Migration `0011_growth_tools` adds owner-scoped `growth_records`. Authenticated users can read only their own rows; validated RPCs handle writes and merge-only guest imports. Direct client writes and TRUNCATE are revoked. New account backups include reviews, priorities and commitments in one owned snapshot; verified restore merges missing records without overwriting existing ones. Older signed backups remain supported. Guest exports include local growth data.

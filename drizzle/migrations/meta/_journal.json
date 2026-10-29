@@ -78,6 +78,13 @@
       "when": 1793232000010,
       "tag": "0010_verified_backup_restore",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793318400011,
+      "tag": "0011_growth_tools",
+      "breakpoints": true
     }
   ]
 }

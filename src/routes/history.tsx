@@ -1,3 +1,5 @@
+import { WeeklyReview } from "@/components/rooted/GrowthTools";
+import { growthRecord } from "@/lib/rooted/growth";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -10,11 +12,11 @@ import { useRooted } from "@/lib/rooted/store";
 import { ACTIVITY_LABEL, ALL_ACTIVITIES, JOURNAL_LABEL, dayPoints, type Entry, type JournalType } from "@/lib/rooted/logic";
 import { cn } from "@/lib/utils";
 
-type Search = { view: "activity" | "entries"; kind: "all" | "learn" | "gratitude" | "journal" };
+type Search = { view: "activity" | "entries" | "review"; kind: "all" | "learn" | "gratitude" | "journal" };
 
 export const Route = createFileRoute("/history")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    view: s["view"] === "entries" ? "entries" : "activity",
+    view: s["view"] === "review" ? "review" : s["view"] === "entries" ? "entries" : "activity",
     kind: (["learn", "gratitude", "journal"] as const).includes(s["kind"] as never) ? (s["kind"] as Search["kind"]) : "all",
   }),
   head: () => ({
@@ -36,29 +38,30 @@ function HistoryPage() {
   return (
     <Shell>
       <h1 className="mb-3 text-xl font-extrabold">History</h1>
-      <div className="grid grid-cols-2 gap-1 rounded-2xl bg-card p-1">
-        {(["activity", "entries"] as const).map((v) => (
+      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-card p-1">
+        {(["activity", "entries", "review"] as const).map((v) => (
           <button key={v} onClick={() => nav({ search: { ...search, view: v }, replace: true })}
-            className={cn("min-h-11 rounded-xl font-bold", search.view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
-            {v === "activity" ? "Daily activity" : "Archives"}
+            className={cn("min-h-11 rounded-xl text-xs font-bold sm:text-sm", search.view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+            {v === "activity" ? "Daily activity" : v === "review" ? "Weekly review" : "Archives"}
           </button>
         ))}
       </div>
-      <div className="mt-4">{search.view === "activity" ? <Activity /> : <Archives kind={search.kind} setKind={(k) => nav({ search: { ...search, kind: k }, replace: true })} />}</div>
+      <div className="mt-4">{search.view === "activity" ? <Activity /> : search.view === "review" ? <WeeklyReview /> : <Archives kind={search.kind} setKind={(k) => nav({ search: { ...search, kind: k }, replace: true })} />}</div>
     </Shell>
   );
 }
 
 function Activity() {
   const { data } = useRooted();
-  const dates = [...new Set(Object.keys(data.records).map((k) => k.split("|")[0] ?? ""))].sort().reverse();
-  if (!dates.length) return <p className="rounded-3xl bg-card p-6 text-center text-muted-foreground">No activity yet. Complete a habit on Home to start.</p>;
+  const dates = [...new Set([...Object.keys(data.records).map((k) => k.split("|")[0] ?? ""), ...(data.growth ?? []).filter((r) => r.kind === "priorities" && r.value.length).map((r) => r.key)])].sort().reverse();
+  if (!dates.length) return <p className="rounded-3xl bg-card p-6 text-center text-muted-foreground">No activity yet. Complete a habit or save priorities to start.</p>;
   return (
     <ul className="space-y-2">
       {dates.map((d) => (
         <li key={d} className="rounded-2xl bg-card p-3">
           <div className="flex justify-between font-bold"><span>{shortDate(d)}</span><span className="text-teal">{dayPoints(data, d)}/10</span></div>
           <p className="mt-1 text-sm text-muted-foreground">{ALL_ACTIVITIES.filter((a) => data.records[`${d}|${a}`]).map((a) => ACTIVITY_LABEL[a]).join(" · ")}</p>
+          {!!growthRecord(data, "priorities", d)?.value.length && <div className="mt-3 border-t border-border pt-2"><p className="mb-1 text-xs font-semibold text-muted-foreground">Priorities · no points</p>{growthRecord(data, "priorities", d)?.value.map((p, i) => <p key={i} className="whitespace-pre-wrap break-words text-sm">{p.done ? "✓" : "○"} {p.title}{p.when ? ` · ${p.when}` : ""}</p>)}</div>}
         </li>
       ))}
     </ul>

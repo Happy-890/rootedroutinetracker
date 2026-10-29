@@ -1,3 +1,4 @@
+import { HabitDefinitions } from "@/components/rooted/GrowthTools";
 import { BackupSettings } from "@/components/rooted/BackupSettings";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -258,6 +259,7 @@ function SettingsPage() {
             </details>
           )}
         </section>
+        <HabitDefinitions key={`commitments:${backupRevision}`} />
         <ReminderSettings key={backupRevision} />
         <section className="space-y-3 border-t border-border py-5">
           <h2 className="font-extrabold">Data & backup</h2>
