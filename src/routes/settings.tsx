@@ -1,5 +1,6 @@
 import { HabitDefinitions } from "@/components/rooted/GrowthTools";
 import { BackupSettings } from "@/components/rooted/BackupSettings";
+import { AccountSecurity } from "@/components/rooted/AccountSecurity";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -180,9 +181,6 @@ function SettingsPage() {
             <UserRound className="size-4 text-primary" />
             Profile & account
           </h2>
-          {r.mode === "account" && (
-            <p className="break-all text-sm text-muted-foreground">{r.email}</p>
-          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="min-w-0 space-y-1">
               <Label htmlFor="dn">Display name</Label>
@@ -248,6 +246,9 @@ function SettingsPage() {
               {r.mode === "account" ? "Log out" : "Leave guest"}
             </Button>
           </div>
+          {r.mode === "account" && r.userId && (
+            <AccountSecurity email={r.email} userId={r.userId} />
+          )}
           {r.mode !== "account" && (
             <details className="border-t border-border pt-3">
               <summary className="cursor-pointer text-sm font-semibold">
