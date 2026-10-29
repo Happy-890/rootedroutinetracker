@@ -5,7 +5,7 @@ vi.mock("@tanstack/react-start", () => ({
   createServerFn: () => {
     const builder = {
       middleware: () => builder,
-      inputValidator: () => builder,
+      validator: () => builder,
       handler: (fn: unknown) => fn,
     };
     return builder;

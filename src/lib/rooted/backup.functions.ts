@@ -33,7 +33,7 @@ export const exportBackup = createServerFn({ method: "GET" })
   });
 export const restoreBackup = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
-  .inputValidator((input) => z.object({ file: z.string().max(10_000_000) }).parse(input))
+  .validator((input) => z.object({ file: z.string().max(10_000_000) }).parse(input))
   .handler(async ({ data, context }) => {
     const { verifyBackup } = await import("./backup-signing.server");
     const backup = await verifyBackup(data.file, context.userId);

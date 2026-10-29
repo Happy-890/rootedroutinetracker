@@ -16,7 +16,7 @@ export const loadReminders = createServerFn({ method: "GET" })
   });
 export const saveReminders = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
-  .inputValidator((input) => reminderSchema.parse(input))
+  .validator((input) => reminderSchema.parse(input))
   .handler(async ({ data, context }) => {
     const result = await context.supabase
       .from("reminder_preferences")
@@ -38,7 +38,7 @@ export const loadScheduledReminders = createServerFn({ method: "GET" })
   });
 export const saveScheduledReminder = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
-  .inputValidator((input) => scheduledReminderSchema.parse(input))
+  .validator((input) => scheduledReminderSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { id, ...fields } = data;
     const query = id
@@ -54,7 +54,7 @@ export const saveScheduledReminder = createServerFn({ method: "POST" })
   });
 export const deleteScheduledReminder = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
-  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const result = await context.supabase
       .from("daily_reminders")
@@ -73,7 +73,7 @@ export const notificationKey = createServerFn({ method: "GET" })
   });
 export const registerDevice = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
-  .inputValidator((input) => subscriptionSchema.parse(input))
+  .validator((input) => subscriptionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const result = await context.supabase.from("push_devices").upsert(
       {
@@ -92,7 +92,7 @@ export const registerDevice = createServerFn({ method: "POST" })
   });
 export const ownsDevice = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
-  .inputValidator((input) => z.object({ endpoint: z.string().max(2048) }).parse(input))
+  .validator((input) => z.object({ endpoint: z.string().max(2048) }).parse(input))
   .handler(async ({ data, context }) => {
     const result = await context.supabase
       .from("push_devices")
@@ -105,7 +105,7 @@ export const ownsDevice = createServerFn({ method: "POST" })
   });
 export const removeDevice = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
-  .inputValidator((input) => z.object({ endpoint: z.string().max(2048) }).parse(input))
+  .validator((input) => z.object({ endpoint: z.string().max(2048) }).parse(input))
   .handler(async ({ data, context }) => {
     const result = await context.supabase
       .from("push_devices")
@@ -118,7 +118,7 @@ export const removeDevice = createServerFn({ method: "POST" })
 // A fixed setup confirmation, never a user-triggered test reminder.
 export const sendNotificationConfirmation = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
-  .inputValidator((input) => z.object({ endpoint: z.string().max(2048) }).parse(input))
+  .validator((input) => z.object({ endpoint: z.string().max(2048) }).parse(input))
   .handler(async ({ data, context }) => {
     const device = await context.supabase
       .from("push_devices")
