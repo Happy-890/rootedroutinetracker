@@ -29,7 +29,7 @@ export const loadScheduledReminders = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const result = await context.supabase
       .from("daily_reminders")
-      .select("id,title,message,delivery_time,timezone,enabled")
+      .select("id,title,message,delivery_time,timezone,enabled,destination,repeat_mode,weekdays,every_days,start_date")
       .eq("user_id", context.userId)
       .order("delivery_time")
       .order("created_at");
@@ -40,7 +40,9 @@ export const saveScheduledReminder = createServerFn({ method: "POST" })
   .middleware([requireVerifiedAuth])
   .validator((input) => scheduledReminderSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { id, ...fields } = data;
+    const { id, ...raw } = data;
+    if (raw.repeat_mode === "interval" && !raw.start_date) throw new Error("Choose a starting date.");
+    const fields = { ...raw, destination: raw.destination ?? "/", repeat_mode: raw.repeat_mode ?? "daily", weekdays: raw.weekdays ?? 127, every_days: raw.every_days ?? 2, start_date: raw.start_date ?? null };
     const query = id
       ? context.supabase
           .from("daily_reminders")
@@ -48,7 +50,7 @@ export const saveScheduledReminder = createServerFn({ method: "POST" })
           .eq("id", id)
           .eq("user_id", context.userId)
       : context.supabase.from("daily_reminders").insert({ ...fields, user_id: context.userId });
-    const result = await query.select("id,title,message,delivery_time,timezone,enabled").single();
+    const result = await query.select("id,title,message,delivery_time,timezone,enabled,destination,repeat_mode,weekdays,every_days,start_date").single();
     if (result.error || !result.data) throw new Error("Couldn't save this reminder.");
     return result.data;
   });

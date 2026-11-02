@@ -21,11 +21,16 @@ export const subscriptionSchema = z.object({
   keys: z.object({ p256dh: z.string().regex(/^[A-Za-z0-9_-]{87}={0,2}$/), auth: z.string().regex(/^[A-Za-z0-9_-]{22}={0,2}$/) }),
 });
 export const scheduledReminderSchema = reminderSchema.extend({
+  destination: z.enum(["/", "/journal", "/gratitude", "/finance?tab=learn", "/finance?tab=plan", "/history?view=review"]).optional(),
+  repeat_mode: z.enum(["daily","weekdays","interval"]).optional(),
+  weekdays: z.number().int().min(1).max(127).optional(),
+  every_days: z.number().int().min(2).max(365).optional(),
+  start_date: z.string().date().nullable().optional(),
   id: z.string().uuid().optional(),
   title: z.string().trim().min(1).max(80),
 });
 export type DailyReminder = z.infer<typeof scheduledReminderSchema> & { id: string };
 
-export function reminderPayload(title: string, body: string, id?: string) {
-  return { title, body, tag: id ? `rooted-reminder-${id}` : "rooted-reminder-test" };
+export function reminderPayload(title: string, body: string, id?: string, destination?: string) {
+  return { title, body, ...(destination ? {destination} : {}), tag: id ? `rooted-reminder-${id}` : "rooted-reminder-test" };
 }

@@ -53,6 +53,7 @@ type Draft = {
   delivery_time: string;
   timezone: string;
   enabled: boolean;
+  destination?: string; repeat_mode?: string; weekdays?: number; every_days?: number; start_date?: string | null;
   dirty: boolean;
   editing: boolean;
 };
@@ -134,7 +135,9 @@ export function ReminderSettings() {
     }
   }
   async function save(row: Draft, collapse = true) {
-    const parsed = scheduledReminderSchema.safeParse({ ...row, timezone: r.data.profile.timezone });
+    if(row.repeat_mode==="weekdays" && row.weekdays===0) throw new Error("Choose at least one day.");
+    if(row.repeat_mode==="interval" && !row.start_date) throw new Error("Choose a starting date.");
+    const parsed = scheduledReminderSchema.safeParse({ ...row, weekdays:row.weekdays || 127, every_days:row.repeat_mode==="interval"?row.every_days:2, start_date:row.start_date || null, timezone: r.data.profile.timezone });
     if (!parsed.success) throw new Error("Enter a title, message and valid time.");
     const saved = await saveScheduledReminder({ data: parsed.data });
     setRows((current) =>
@@ -314,6 +317,16 @@ export function ReminderSettings() {
                               onChange={(e) => edit(row.key, { message: e.target.value })}
                             />
                           </div>
+                          <fieldset disabled={busy} className="grid gap-3 text-sm">
+                            <label>Opens to <select className="w-full rounded-lg bg-background p-2" value={row.destination ?? "/"} onChange={e=>edit(row.key,{destination:e.target.value})}>
+                              {Object.entries({"/": "Home", "/journal": "Journal", "/gratitude": "Gratitude", "/finance?tab=learn": "Learn", "/finance?tab=plan": "Plan today", "/history?view=review": "Weekly review"}).map(([url,label])=><option key={url} value={url}>{label}</option>)}
+                            </select></label>
+                            <label>Repeats <select className="w-full rounded-lg bg-background p-2" value={row.repeat_mode ?? "daily"} onChange={e=>edit(row.key,{repeat_mode:e.target.value,...(e.target.value==="interval" && !row.start_date ? {start_date:new Intl.DateTimeFormat("sv-SE",{timeZone:r.data.profile.timezone}).format(new Date())} : {})})}>
+                              <option value="daily">Every day</option><option value="weekdays">Selected days</option><option value="interval">Every few days</option>
+                            </select></label>
+                            {row.repeat_mode==="weekdays" && <div className="flex flex-wrap gap-2">{["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day,i)=><label key={day}><input type="checkbox" checked={!!((row.weekdays ?? 127) & (1<<i))} onChange={()=>edit(row.key,{weekdays:(row.weekdays ?? 127) ^ (1<<i)})}/> {day}</label>)}</div>}
+                            {row.repeat_mode==="interval" && <><label>Every <Input type="number" min="2" max="365" value={row.every_days ?? 2} onChange={e=>edit(row.key,{every_days:Number(e.target.value)})}/> days</label><label>Starting on <Input type="date" value={row.start_date ?? ""} onChange={e=>edit(row.key,{start_date:e.target.value})}/></label></>}
+                          </fieldset>
                           <div className="flex items-center justify-between gap-2">
                             <Button
                               size="sm"

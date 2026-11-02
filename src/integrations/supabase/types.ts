@@ -71,6 +71,12 @@ export type Database = {
       }
       daily_reminders: {
         Row: {
+          destination: string
+          repeat_mode: string
+          weekdays: number
+          every_days: number
+          start_date: string | null
+
           created_at: string
           delivery_time: string
           enabled: boolean
@@ -83,6 +89,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          destination?: string
+          repeat_mode?: string
+          weekdays?: number
+          every_days?: number
+          start_date?: string | null
+
           created_at?: string
           delivery_time?: string
           enabled?: boolean
@@ -95,6 +107,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          destination?: string
+          repeat_mode?: string
+          weekdays?: number
+          every_days?: number
+          start_date?: string | null
+
           created_at?: string
           delivery_time?: string
           enabled?: boolean
@@ -298,6 +316,10 @@ export type Database = {
       claim_rooted_reminders_v3: {
         Args: never
         Returns: { device_id: string; reminder_id: string; user_id: string; endpoint: string; p256dh: string; auth: string; title: string; message: string; local_date: string; lease_token: string; attempt: number }[]
+      }
+      claim_rooted_reminders_v4: {
+        Args: never
+        Returns: { device_id: string; reminder_id: string; user_id: string; destination: string; endpoint: string; p256dh: string; auth: string; title: string; message: string; local_date: string; lease_token: string; attempt: number }[]
       }
       finish_rooted_delivery: {
         Args: { p_reminder_id: string; p_device_id: string; p_local_date: string; p_lease_token: string; p_ok: boolean; p_retryable: boolean; p_status: number }

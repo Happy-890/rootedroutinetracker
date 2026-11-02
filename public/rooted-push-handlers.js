@@ -4,6 +4,7 @@ self.addEventListener("push", event => {
   try { if (event.data) message = event.data.json(); } catch { /* Display the default message. */ }
   event.waitUntil(self.registration.showNotification(typeof message.title === "string" && message.title.trim() ? message.title.slice(0, 80) : "Daily Check-In", {
     body: typeof message.body === "string" ? message.body.slice(0, 200) : "Build what matters, daily.",
+    data: {destination: message.destination},
     icon: "/icons/icon-192.png", badge: "/icons/icon-192.png", tag: typeof message.tag === "string" ? message.tag : "rooted-reminder",
   }));
 });
@@ -12,8 +13,10 @@ self.addEventListener("notificationclick", event => {
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     const existing = windows.find(client => new URL(client.url).origin === self.location.origin);
-    if (existing) { await existing.focus(); return; }
-    await self.clients.openWindow("/");
+    const requested = event.notification.data?.destination;
+    const target = ["/", "/journal", "/gratitude", "/finance?tab=learn", "/finance?tab=plan", "/history?view=review"].includes(requested) ? requested : "/";
+    if (existing) { try { const moved = await existing.navigate(target); if (moved) { await moved.focus(); return; } } catch {} }
+    await self.clients.openWindow(target);
   })());
 });
 // Never cache navigations, credentials, API responses or private account data.

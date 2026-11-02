@@ -29,9 +29,9 @@ export async function pushKeys() {
   return { publicKey: config.public_key, privateKey: new TextDecoder().decode(clear), subject: "https://rootedroutinetracker.lovable.app" };
 }
 
-export async function sendPush(device: { endpoint: string; p256dh: string; auth: string }, message: string, title = "Daily Check-In", reminderId?: string) {
+export async function sendPush(device: { endpoint: string; p256dh: string; auth: string }, message: string, title = "Daily Check-In", reminderId?: string, destination?: string) {
   if (!allowedPushEndpoint(device.endpoint)) return { ok: false, expired: true, status: 0, host: "Unsupported notification service" };
-  const payload = await buildPushPayload({ data: JSON.stringify(reminderPayload(title, message, reminderId)), options: { ttl: 300, urgency: "normal" } }, { endpoint: device.endpoint, expirationTime: null, keys: { p256dh: device.p256dh, auth: device.auth } }, await pushKeys());
+  const payload = await buildPushPayload({ data: JSON.stringify(reminderPayload(title, message, reminderId, destination)), options: { ttl: 300, urgency: "normal" } }, { endpoint: device.endpoint, expirationTime: null, keys: { p256dh: device.p256dh, auth: device.auth } }, await pushKeys());
   // Edge runtime only supports "follow" | "manual"; treat any redirect as a failure.
   const response = await fetch(device.endpoint, { ...payload, redirect: "manual", signal: AbortSignal.timeout(8000) });
   return { ok: response.status >= 200 && response.status < 300, expired: response.status === 404 || response.status === 410, status: response.status, host: new URL(device.endpoint).host };

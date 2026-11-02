@@ -3,7 +3,7 @@ import { sendPush } from "./push.server";
 import { logEvent } from "./log.server";
 
 export async function deliverDueReminders() {
-  const due = await supabaseAdmin.rpc("claim_rooted_reminders_v3");
+  const due = await supabaseAdmin.rpc("claim_rooted_reminders_v4");
   if (due.error) throw new Error("Couldn't claim reminders.");
   let sent = 0;
   // Bounded batches keep the job and push providers from being overwhelmed.
@@ -16,7 +16,7 @@ export async function deliverDueReminders() {
           status = 0,
           expired = false;
         try {
-          const result = await sendPush(device, device.message, device.title, device.reminder_id);
+          const result = await sendPush(device, device.message, device.title, device.reminder_id, device.destination);
           ({ ok, status, expired } = result);
           retryable = status === 408 || status === 429 || status >= 500;
           await logEvent(

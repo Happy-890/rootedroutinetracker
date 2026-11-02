@@ -22,7 +22,7 @@ const device = {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.rpc.mockImplementation(async (name) =>
-    name === "claim_rooted_reminders_v3"
+    name === "claim_rooted_reminders_v4"
       ? { data: [device], error: null }
       : { data: true, error: null },
   );
