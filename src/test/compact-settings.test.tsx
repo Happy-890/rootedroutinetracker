@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/rooted/store", () => ({
   useRooted: () => ({
     mode: "account",
+    dataReady: true,
     userId: "test-user",
     data: { profile: mocks.profile, records: mocks.records, entries: [] },
     today: "2026-10-26",

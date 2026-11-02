@@ -8,7 +8,7 @@ import { AuthScreen } from "./AuthScreen";
 import { cn } from "@/lib/utils";
 
 export function Shell({ children, title, back }: { children: ReactNode; title?: string; back?: boolean }) {
-  const { mode, data, today, dataError, reload } = useRooted();
+  const { mode, data, today, dataReady, dataError, reload } = useRooted();
   const router = useRouter();
 
   if (mode === "loading") {
@@ -20,7 +20,7 @@ export function Shell({ children, title, back }: { children: ReactNode; title?: 
   }
   if (mode === "none") return <AuthScreen />;
 
-  const name = data.profile.display_name || (mode === "guest" ? "Guest" : "You");
+  const name = data.profile.display_name || (mode === "guest" ? "Guest" : "");
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col">
@@ -42,15 +42,15 @@ export function Shell({ children, title, back }: { children: ReactNode; title?: 
               <img src={logo} alt="" width={34} height={34} className="size-[34px] rounded-lg" />
               <div className="min-w-0">
                 <div className="text-base font-extrabold leading-tight">Rooted</div>
-                <div className="truncate text-xs text-muted-foreground">Hi, {name}</div>
+                <div className="truncate text-xs text-muted-foreground">{name ? "Hi, "+name : ""}</div>
               </div>
             </Link>
             <div className="flex shrink-0 items-center gap-1.5">
               <div className="rounded-full bg-card px-2.5 py-1 text-xs font-bold" aria-label={`${totalPoints(data)} total points`}>
-                <span className="text-primary">{totalPoints(data)}</span> P
+                <span className="text-primary">{dataReady ? totalPoints(data) : "…"}</span> P
               </div>
               <div className="flex items-center gap-1 rounded-full bg-card px-2.5 py-1 text-xs font-bold" aria-label={`${streak(data, today)} day streak`}>
-                <Flame className="size-3.5 text-coral" /> {streak(data, today)}
+                <Flame className="size-3.5 text-coral" /> {dataReady ? streak(data, today) : "…"}
               </div>
             </div>
           </div>

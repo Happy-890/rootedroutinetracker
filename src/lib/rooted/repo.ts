@@ -79,12 +79,12 @@ function offlineGuard() {
 /** Account storage; row-level security restricts every row to its owner. */
 export class CloudRepo implements Repo {
   constructor(private userId: string) {}
-  async load(): Promise<RootedData> {
+  async load(includeEntries = true): Promise<RootedData> {
     offlineGuard();
     const [p, r, e, growth] = await Promise.all([
       supabase.from("profiles").select("display_name,timezone").eq("id", this.userId).maybeSingle(),
       this.loadRecords(),
-      this.loadEntries(),
+      includeEntries ? this.loadEntries() : Promise.resolve({data: [], error: null}),
       this.loadGrowth(),
     ]);
     if (p.error) throw p.error;
@@ -131,7 +131,7 @@ export class CloudRepo implements Repo {
       if (result.data.length < 1000) return { data: rows, error: null };
     }
   }
-  private async loadEntries() {
+  async loadEntries() {
     const rows = [];
     for (let offset = 0; ; offset += 1000) {
       const result = await supabase.from("entries").select("*").eq("user_id", this.userId).order("created_at", { ascending: false }).order("id").range(offset, offset + 999);

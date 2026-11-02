@@ -22,7 +22,7 @@ export const Route = createFileRoute("/gratitude")({
 });
 
 function Gratitude() {
-  const { createEntry, data, today } = useRooted();
+  const { dataReady, createEntry, data, today } = useRooted();
   const [items, setItems, clear] = useDraft<string[]>("gratitude", ["", "", ""]);
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -63,7 +63,7 @@ function Gratitude() {
         ))}
         {done && <p className="text-sm text-teal">Gratitude bonus earned today.</p>}
         <SaveStatus />
-        <Button className="w-full" onClick={submit} disabled={busy}>Submit</Button>
+        <Button className="w-full" onClick={submit} disabled={busy || !dataReady}>Submit</Button>
       </div>
     </Shell>
   );

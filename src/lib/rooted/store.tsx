@@ -37,6 +37,8 @@ interface Ctx {
   userId: string | null;
   data: RootedData;
   dataError: string | null;
+  archiveReady: boolean;
+  loadArchive: () => Promise<void>;
   dataReady: boolean;
   today: string;
   save: SaveState;
@@ -81,68 +83,98 @@ export function RootedProvider({ children }: { children: ReactNode }) {
 
   const today = scoringDate(now);
 
-  const loadFrom = useCallback(async (repo: Repo) => {
-    if (repoRef.current !== repo) setDataReady(false);
+  const identity = useRef<string | null>(null);
+  const [archiveReady, setArchiveReady] = useState(false);
+  const inflight = useRef(new WeakMap<Repo, Promise<void>>());
+  const archiveFlight = useRef(new WeakMap<Repo, Promise<void>>());
+  const cacheKey = "rooted:last-greeting";
+  const remember = (id: string, name: string) => {
+    try { localStorage.setItem(cacheKey, JSON.stringify([id, name])); } catch { /* optional cache */ }
+  };
+  const loadFrom = useCallback((repo: Repo) => {
+    const existing = inflight.current.get(repo);
+    if (existing) return existing;
     repoRef.current = repo;
-    try {
-      const loaded = await repo.load();
-      if (repoRef.current !== repo) return;
-      setData(loaded);
-      setDataReady(true);
-      setDataError(null);
-    } catch (e) {
-      if (repoRef.current !== repo) return;
-      setDataError((e as Error).message || "Couldn't load your data.");
-    }
+    const work = (async () => {
+      try {
+        const loaded = repo instanceof CloudRepo ? await repo.load(false) : await repo.load();
+        if (repoRef.current !== repo) return;
+        setData(previous => repo instanceof CloudRepo ? {...loaded, entries: previous.entries} : loaded);
+        if (repo instanceof CloudRepo && identity.current) remember(identity.current, loaded.profile.display_name);
+        setDataReady(true);
+        setDataError(null);
+      } catch (e) {
+        if (repoRef.current === repo) setDataError((e as Error).message || "Couldn't load your data.");
+      }
+    })().finally(() => inflight.current.delete(repo));
+    inflight.current.set(repo, work);
+    return work;
   }, []);
-
-  // Session bootstrap
+  const loadArchive = useCallback(async () => {
+    const repo = repoRef.current;
+    if (!(repo instanceof CloudRepo)) return;
+    const active = archiveFlight.current.get(repo);
+    if (active) return active;
+    const work = (async () => {
+      const result = await repo.loadEntries();
+      if (repoRef.current !== repo) return;
+      if (result.error) throw result.error;
+      setData(d => ({...d, entries: result.data as Entry[]}));
+      setArchiveReady(true);
+    })().catch(() => { if (repoRef.current === repo) setDataError("Couldn't load archives."); })
+      .finally(() => archiveFlight.current.delete(repo));
+    archiveFlight.current.set(repo, work);
+    return work;
+  }, []);
   useEffect(() => {
     let active = true;
-    const apply = (session: { user: { id: string; email?: string } } | null) => {
-      if (!active) return;
-      if (session) {
-        setData(emptyData());
-        setUserId(session.user.id);
-        setEmail(session.user.email ?? null);
-        setMode("account");
-        void reconcileDeviceAccount().catch(() => undefined);
-        void loadFrom(new CloudRepo(session.user.id));
-      } else if (localStorage.getItem(MODE_KEY) === "guest") {
-        setUserId(null);
-        setEmail(null);
-        setMode("guest");
-        void loadFrom(new LocalRepo());
-      } else {
-        repoRef.current = null;
-        setUserId(null);
-        setEmail(null);
-        setData(emptyData());
-        setMode("none");
-      }
-    };
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") void unsubscribeDeviceLocally().catch(() => undefined);
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
-        queueMicrotask(() => apply(session));
-      }
+      queueMicrotask(() => {
+        if (!active) return;
+        if (session) {
+          const uid = session.user.id;
+          setEmail(session.user.email ?? null);
+          if (identity.current === uid) return;
+          identity.current = uid;
+          let name = "";
+          try {
+            const saved = JSON.parse(localStorage.getItem(cacheKey) || "null");
+            if (saved?.[0] === uid && typeof saved[1] === "string") name = saved[1];
+            else localStorage.removeItem(cacheKey);
+          } catch { /* optional cache */ }
+          const initial = emptyData();
+          initial.profile.display_name = name;
+          setData(initial); setDataReady(false); setArchiveReady(false); setDataError(null);
+          setUserId(uid); setMode("account");
+          void loadFrom(new CloudRepo(uid));
+          void reconcileDeviceAccount().catch(() => undefined);
+          // Data requests already enforce auth; verify the stored identity in parallel.
+          void supabase.auth.getUser().then(({error}) => {
+            if (active && identity.current === uid && error?.status === 401)
+              void supabase.auth.signOut({scope:"local"});
+          }).catch(() => undefined);
+        } else {
+          identity.current = null; repoRef.current = null;
+          setUserId(null); setEmail(null); setData(emptyData()); setDataReady(false);
+          setArchiveReady(false); setDataError(null);
+          try { localStorage.removeItem(cacheKey); } catch { /* optional cache */ }
+          if (event === "SIGNED_OUT") void unsubscribeDeviceLocally().catch(() => undefined);
+          if (localStorage.getItem(MODE_KEY) === "guest") {
+            setMode("guest"); void loadFrom(new LocalRepo());
+          } else setMode("none");
+        }
+      });
     });
-    supabase.auth
-      .getUser()
-      .then(({ data }) => apply(data.user ? { user: data.user } : null))
-      .catch(() => apply(null));
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
+    return () => { active = false; sub.subscription.unsubscribe(); };
   }, [loadFrom]);
 
   // Rollover + refresh on focus
   useEffect(() => {
     const tick = () => setNow(new Date());
+    let lastFocus = 0;
     const onFocus = () => {
       tick();
-      if (repoRef.current && document.visibilityState === "visible") void loadFrom(repoRef.current);
+      if (repoRef.current && document.visibilityState === "visible" && Date.now()-lastFocus>1500) { lastFocus=Date.now(); void loadFrom(repoRef.current); }
     };
     const id = setInterval(tick, 30_000);
     window.addEventListener("focus", onFocus);
@@ -160,6 +192,7 @@ export function RootedProvider({ children }: { children: ReactNode }) {
     setSave({ kind: "saving" });
     try {
       await fn(repo);
+      if (repoRef.current !== repo) return false;
       setSave({ kind: "saved" });
       return true;
     } catch (e) {
@@ -226,7 +259,7 @@ export function RootedProvider({ children }: { children: ReactNode }) {
   const saveProfile = useCallback(
     async (p: Profile) => {
       const ok = await run((r) => r.saveProfile(p));
-      if (ok) setData((d) => ({ ...d, profile: p }));
+      if (ok) { setData((d) => ({ ...d, profile: p })); if(identity.current) remember(identity.current,p.display_name); }
       return ok;
     },
     [run],
@@ -298,7 +331,8 @@ export function RootedProvider({ children }: { children: ReactNode }) {
 
   const reload = useCallback(async () => {
     if (repoRef.current) await loadFrom(repoRef.current);
-  }, [loadFrom]);
+    if (window.location.pathname === "/history" && new URLSearchParams(window.location.search).get("view") === "entries") await loadArchive();
+  }, [loadFrom, loadArchive]);
 
   const value: Ctx = {
     mode,
@@ -306,6 +340,8 @@ export function RootedProvider({ children }: { children: ReactNode }) {
     userId,
     data,
     dataError,
+    archiveReady: mode === "guest" ? dataReady : archiveReady,
+    loadArchive,
     dataReady,
     today,
     save,

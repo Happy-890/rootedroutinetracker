@@ -52,7 +52,7 @@ function Finance() {
 }
 
 function Learn() {
-  const { createEntry, data, today } = useRooted();
+  const { dataReady, createEntry, data, today } = useRooted();
   const [text, setText, clear] = useDraft("learn", "");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -79,7 +79,7 @@ function Learn() {
       {err && <p className="text-sm text-destructive">{err}</p>}
       {done && <p className="text-sm text-teal">Learn point earned today. More entries are welcome.</p>}
       <SaveStatus />
-      <Button className="w-full" onClick={submit} disabled={busy}>Submit</Button>
+      <Button className="w-full" onClick={submit} disabled={busy || !dataReady}>Submit</Button>
       <Button variant="secondary" className="w-full" asChild>
         <Link to="/history" search={{ view: "entries", kind: "learn" }}>View Archives</Link>
       </Button>

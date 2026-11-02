@@ -65,6 +65,7 @@ const ICONS: Record<PillarId, { icon: typeof Cross; color: string }> = {
 
 function Home() {
   const r = useRooted();
+  if (!r.dataReady) return <Shell><div role="status" className="rounded-2xl bg-card p-4 text-muted-foreground">Loading today’s progress…</div></Shell>;
   const priorities = growthRecord(r.data, "priorities", r.today)?.value ?? [];
   return (
     <Shell>

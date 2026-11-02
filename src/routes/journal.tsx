@@ -25,7 +25,7 @@ export const Route = createFileRoute("/journal")({
 const MIN_ANSWER = 2;
 
 function Journal() {
-  const { createEntry, data, today } = useRooted();
+  const { dataReady, createEntry, data, today } = useRooted();
   const [type, setType] = useDraft<JournalType>("journal:type", "freeflow");
   const [free, setFree, clearFree] = useDraft("journal:freeflow", "");
   const [dev, setDev, clearDev] = useDraft("journal:devotional", "");
@@ -104,7 +104,7 @@ function Journal() {
         )}
         {done && <p className="text-sm text-teal">Journal bonus earned today. Extra entries are saved without extra points.</p>}
         <SaveStatus />
-        <Button className="w-full" onClick={submit} disabled={busy}>Submit</Button>
+        <Button className="w-full" onClick={submit} disabled={busy || !dataReady}>Submit</Button>
       </div>
     </Shell>
   );

@@ -1,7 +1,7 @@
 import { WeeklyReview } from "@/components/rooted/GrowthTools";
 import { growthRecord } from "@/lib/rooted/growth";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/rooted/Shell";
 import { ArchiveDateFilter } from "@/components/rooted/ArchiveDateFilter";
@@ -69,7 +69,8 @@ function Activity() {
 }
 
 function Archives({ kind, setKind }: { kind: Search["kind"]; setKind: (k: Search["kind"]) => void }) {
-  const { data, today } = useRooted();
+  const { data, today, loadArchive, archiveReady, mode, userId } = useRooted();
+  useEffect(()=>{void loadArchive();},[loadArchive,mode,userId]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const list = data.entries
@@ -91,7 +92,7 @@ function Archives({ kind, setKind }: { kind: Search["kind"]; setKind: (k: Search
         <ArchiveDateFilter label="From" value={from} onChange={setFrom} today={today} max={to || today} />
         <ArchiveDateFilter label="To" value={to} onChange={setTo} today={today} min={from} align="end" />
       </div>
-      {list.length === 0 ? <p className="mt-4 rounded-3xl bg-card p-6 text-center text-muted-foreground">No entries found.</p> : (
+      {!archiveReady ? <p role="status">Loading entries…</p> : list.length === 0 ? <p className="mt-4 rounded-3xl bg-card p-6 text-center text-muted-foreground">No entries found.</p> : (
         <ul className="mt-3 space-y-2">{list.map((e) => <EntryItem key={e.id} e={e} />)}</ul>
       )}
     </div>
