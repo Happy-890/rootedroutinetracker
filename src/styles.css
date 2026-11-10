@@ -5,6 +5,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Prevent the host badge flashing before hydration removes its DOM node. */
+#lovable-badge {
+  display: none !important;
+}
+
 @theme inline {
   --font-sans: "Nunito Variable", ui-rounded, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);

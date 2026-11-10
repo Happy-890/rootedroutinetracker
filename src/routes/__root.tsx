@@ -16,6 +16,7 @@ import { RootedProvider } from "@/lib/rooted/store";
 import { Toaster } from "@/components/ui/sonner";
 import { registerRootedOffline } from "@/lib/rooted/pwa";
 import { AppearanceProvider } from "@/lib/rooted/appearance";
+import { removeHostBadge } from "@/lib/rooted/remove-host-badge";
 
 function NotFoundComponent() {
   return (
@@ -126,6 +127,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(removeHostBadge, []);
   useEffect(() => { void registerRootedOffline().catch(() => undefined); }, []);
 
   return (
