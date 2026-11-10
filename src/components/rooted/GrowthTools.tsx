@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useRooted } from "@/lib/rooted/store";
 import { ACTIVITY_LABEL, PILLARS, type Activity, type PillarId } from "@/lib/rooted/logic";
 import {
@@ -325,16 +324,7 @@ function PrioritiesForm() {
   );
 }
 
-const suggestions: Partial<Record<Activity, string>> = {
-  bible: "Read a passage and consider its application.",
-  prayer: "Set aside intentional time for prayer.",
-  marriage: "Give my spouse undivided attention.",
-  relationship: "Reach out to someone intentionally.",
-  exercise: "Make time for purposeful movement.",
-  nutrition: "Follow the food commitment I chose.",
-  learn: "Learn something I can put into practice.",
-  plan: "Choose my priorities and review my day.",
-};
+import { suggestions } from "./habit-suggestions";
 export function HabitDefinitions() {
   const r = useRooted();
   const saved = growthRecord(r.data, "definitions", "personal")?.value ?? emptyDefinitions();
@@ -399,40 +389,5 @@ export function HabitDefinitions() {
         {busy ? "Saving…" : "Save commitments"}
       </Button>
     </section>
-  );
-}
-export function PillarCommitments({ id }: { id: PillarId }) {
-  const r = useRooted();
-  const definitions = growthRecord(r.data, "definitions", "personal")?.value;
-  const pillar = PILLARS.find((p) => p.id === id)!;
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={`${pillar.name} habit commitments`}
-          className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Info className="size-3.5" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="max-w-[calc(100vw-2rem)] space-y-3 rounded-2xl text-sm"
-        align="center"
-      >
-        <h3 className="font-bold">{pillar.name} commitments</h3>
-        {pillar.activities.map((a) => (
-          <p key={a} className="whitespace-pre-wrap break-words">
-            <strong>{ACTIVITY_LABEL[a]}:</strong>{" "}
-            {definitions?.habits[a as HabitActivity]?.trim() || suggestions[a]}
-          </p>
-        ))}
-        <Button variant="secondary" size="sm" asChild>
-          <Link to="/settings" hash="habit-commitments">
-            Set my commitments
-          </Link>
-        </Button>
-      </PopoverContent>
-    </Popover>
   );
 }

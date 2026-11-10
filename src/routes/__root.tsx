@@ -12,7 +12,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { RootedProvider } from "@/lib/rooted/store";
+import { LaunchCover } from "@/components/rooted/LoadingScreen";
+import { RootedProvider, useRooted } from "@/lib/rooted/store";
 import { Toaster } from "@/components/ui/sonner";
 import { registerRootedOffline } from "@/lib/rooted/pwa";
 import { AppearanceProvider } from "@/lib/rooted/appearance";
@@ -100,6 +101,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+       { rel: "preload", href: "/icons/icon-192.png", as: "image" },
        { rel: "icon", href: "/favicon.png", type: "image/png" },
        { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
        { rel: "manifest", href: "/manifest.webmanifest" },
@@ -118,6 +120,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <LaunchCover />
         {children}
         <Scripts />
       </body>
@@ -128,12 +131,28 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(removeHostBadge, []);
-  useEffect(() => { void registerRootedOffline().catch(() => undefined); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-       <AppearanceProvider><RootedProvider><Outlet /><Toaster /></RootedProvider></AppearanceProvider>
+       <AppearanceProvider><RootedProvider><OfflineRegistration /><Outlet /><Toaster /></RootedProvider></AppearanceProvider>
     </QueryClientProvider>
   );
+}
+
+
+// Cache other pages only after the opening page has its account data.
+function OfflineRegistration() {
+  const {mode, dataReady} = useRooted();
+  useEffect(() => {
+    if (mode === "loading" || ((mode === "account" || mode === "guest") && !dataReady)) return;
+    const register = () => { void registerRootedOffline().catch(() => undefined); };
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(register, {timeout: 10000});
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = setTimeout(register, 1500);
+    return () => clearTimeout(id);
+  }, [mode, dataReady]);
+  return null;
 }

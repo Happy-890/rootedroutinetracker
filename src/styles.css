@@ -10,6 +10,25 @@
   display: none !important;
 }
 
+.rooted-loading-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d5b85f;
+  box-shadow: -14px 0 0 #d5b85f66, 14px 0 0 #d5b85f66;
+  animation: rooted-loading-breathe 1.6s ease-in-out infinite;
+}
+.rooted-skeleton {
+  border-radius: 0.65rem;
+  background: var(--muted);
+  animation: rooted-loading-breathe 1.6s ease-in-out infinite;
+}
+@keyframes rooted-loading-breathe { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .rooted-loading-dot, .rooted-skeleton { animation: none; }
+}
+
 @theme inline {
   --font-sans: "Nunito Variable", ui-rounded, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);

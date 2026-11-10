@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRooted } from "@/lib/rooted/store";
-import { lovable } from "@/integrations/lovable";
+
 
 type View = "signin" | "signup" | "forgot";
 
@@ -22,6 +22,7 @@ export function AuthForm({ onDone }: { onDone?: () => void }) {
     setBusy(true);
     setMsg(null);
     try {
+      const { lovable } = await import("@/integrations/lovable");
       const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
       if (result.error) throw result.error;
       if (!result.redirected) onDone?.();

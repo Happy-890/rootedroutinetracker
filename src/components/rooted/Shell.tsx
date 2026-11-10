@@ -1,24 +1,19 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Flame, History, House, Loader2, Settings } from "lucide-react";
-import type { ReactNode } from "react";
+import { ArrowLeft, Flame, History, House, Settings } from "lucide-react";
+import { lazy, Suspense, type ReactNode } from "react";
 import logo from "@/assets/logo.png";
 import { useRooted } from "@/lib/rooted/store";
 import { streak, totalPoints } from "@/lib/rooted/logic";
-import { AuthScreen } from "./AuthScreen";
+import { LoadingScreen } from "./LoadingScreen";
+const AuthScreen = lazy(() => import("./AuthScreen").then(m => ({default:m.AuthScreen})));
 import { cn } from "@/lib/utils";
 
 export function Shell({ children, title, back }: { children: ReactNode; title?: string; back?: boolean }) {
   const { mode, data, today, dataReady, dataError, reload } = useRooted();
   const router = useRouter();
 
-  if (mode === "loading") {
-    return (
-      <div className="flex min-h-dvh items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-primary" aria-label="Loading" />
-      </div>
-    );
-  }
-  if (mode === "none") return <AuthScreen />;
+  if (mode === "loading") return <LoadingScreen />;
+  if (mode === "none") return <Suspense fallback={<LoadingScreen />}><AuthScreen /></Suspense>;
 
   const name = data.profile.display_name || (mode === "guest" ? "Guest" : "");
 
