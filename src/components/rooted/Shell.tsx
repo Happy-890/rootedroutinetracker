@@ -4,13 +4,14 @@ import { lazy, Suspense, type ReactNode } from "react";
 import logo from "@/assets/logo.png";
 import { useRooted } from "@/lib/rooted/store";
 import { streak, totalPoints } from "@/lib/rooted/logic";
-import { LoadingScreen } from "./LoadingScreen";
+import { LoadingScreen, useLaunchReady } from "./LoadingScreen";
 const AuthScreen = lazy(() => import("./AuthScreen").then(m => ({default:m.AuthScreen})));
 import { cn } from "@/lib/utils";
 
 export function Shell({ children, title, back }: { children: ReactNode; title?: string; back?: boolean }) {
   const { mode, data, today, dataReady, dataError, reload } = useRooted();
   const router = useRouter();
+  useLaunchReady((mode === "account" || mode === "guest") && (dataReady || !!dataError));
 
   if (mode === "loading") return <LoadingScreen />;
   if (mode === "none") return <Suspense fallback={<LoadingScreen />}><AuthScreen /></Suspense>;

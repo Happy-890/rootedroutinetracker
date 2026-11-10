@@ -1,3 +1,4 @@
+import { useLaunchReady } from "./LoadingScreen";
 import { useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -101,6 +102,7 @@ export function AuthForm({ onDone }: { onDone?: () => void }) {
 }
 
 export function AuthScreen() {
+  useLaunchReady(true);
   const { startGuest } = useRooted();
   return (
     <div className="pt-safe mx-auto flex min-h-dvh max-w-md flex-col justify-center px-5 pb-10">

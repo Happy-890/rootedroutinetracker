@@ -1,4 +1,19 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+
+const LaunchContext = createContext<{ ready: boolean; setReady: (ready: boolean) => void }>({
+  ready: false,
+  setReady: () => {},
+});
+export function LaunchProvider({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(false);
+  return <LaunchContext.Provider value={{ ready, setReady }}>{children}</LaunchContext.Provider>;
+}
+export function useLaunchReady(ready: boolean) {
+  const { setReady } = useContext(LaunchContext);
+  useEffect(() => {
+    if (ready) setReady(true);
+  }, [ready, setReady]);
+}
 
 /** Public branding only: safe to render in the initial HTML before auth or JS. */
 export function LoadingScreen() {
@@ -55,9 +70,13 @@ export function LoadingScreen() {
 }
 
 export function LaunchCover() {
-  const [visible, setVisible] = useState(true);
-  useEffect(() => setVisible(false), []);
-  return visible ? (
+  const { ready } = useContext(LaunchContext);
+  const [minimumElapsed, setMinimumElapsed] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMinimumElapsed(true), 850);
+    return () => clearTimeout(timer);
+  }, []);
+  return !minimumElapsed || !ready ? (
     <div
       id="rooted-launch"
       style={{ position: "fixed", inset: 0, zIndex: 10000, background: "#202020" }}

@@ -1,17 +1,55 @@
 import { act, render, screen, cleanup } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
-import { HomeSkeleton, LaunchCover, LoadingScreen } from "@/components/rooted/LoadingScreen";
+import {
+  HomeSkeleton,
+  LaunchCover,
+  LaunchProvider,
+  useLaunchReady,
+  LoadingScreen,
+} from "@/components/rooted/LoadingScreen";
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
 });
-it("puts the local sprout into initial server HTML and releases the cover after hydration", () => {
-  const html = renderToString(<LaunchCover />);
+function Ready({ ready }: { ready: boolean }) {
+  useLaunchReady(ready);
+  return <p>Page</p>;
+}
+it("keeps the server-rendered sprout for at least 850ms even if ready immediately", () => {
+  vi.useFakeTimers();
+  const html = renderToString(
+    <LaunchProvider>
+      <LaunchCover />
+    </LaunchProvider>,
+  );
   expect(html).toContain('id="rooted-launch"');
   expect(html).toContain("/icons/icon-192.png");
-  expect(html).not.toContain("https://");
-  const { container } = render(<LaunchCover />);
+  const { container } = render(
+    <LaunchProvider>
+      <LaunchCover />
+      <Ready ready />
+    </LaunchProvider>,
+  );
+  act(() => vi.advanceTimersByTime(849));
+  expect(container.querySelector("#rooted-launch")).not.toBeNull();
+  act(() => vi.advanceTimersByTime(1));
+  expect(container.querySelector("#rooted-launch")).toBeNull();
+});
+it("keeps the same cover until the page is ready and never replays it on background refresh", () => {
+  vi.useFakeTimers();
+  const view = (ready: boolean) => (
+    <LaunchProvider>
+      <LaunchCover />
+      <Ready ready={ready} />
+    </LaunchProvider>
+  );
+  const { container, rerender } = render(view(false));
+  act(() => vi.advanceTimersByTime(2000));
+  expect(container.querySelector("#rooted-launch")).not.toBeNull();
+  rerender(view(true));
+  expect(container.querySelector("#rooted-launch")).toBeNull();
+  rerender(view(false));
   expect(container.querySelector("#rooted-launch")).toBeNull();
 });
 it("offers recovery after a slow load without inventing progress", () => {

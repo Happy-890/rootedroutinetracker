@@ -12,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { LaunchCover } from "@/components/rooted/LoadingScreen";
+import { LaunchCover, LaunchProvider, useLaunchReady } from "@/components/rooted/LoadingScreen";
 import { RootedProvider, useRooted } from "@/lib/rooted/store";
 import { Toaster } from "@/components/ui/sonner";
 import { registerRootedOffline } from "@/lib/rooted/pwa";
@@ -20,6 +20,7 @@ import { AppearanceProvider } from "@/lib/rooted/appearance";
 import { removeHostBadge } from "@/lib/rooted/remove-host-badge";
 
 function NotFoundComponent() {
+  useLaunchReady(true);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -42,6 +43,7 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
+  useLaunchReady(true);
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -115,7 +117,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <LaunchProvider><html lang="en">
       <head>
         <HeadContent />
       </head>
@@ -124,7 +126,7 @@ function RootShell({ children }: { children: ReactNode }) {
         {children}
         <Scripts />
       </body>
-    </html>
+    </html></LaunchProvider>
   );
 }
 
