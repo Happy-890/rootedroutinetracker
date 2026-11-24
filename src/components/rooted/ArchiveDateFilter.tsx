@@ -45,13 +45,13 @@ export function ArchiveDateFilter({
           ...(value.slice(0, 4) !== today.slice(0, 4) ? { year: "numeric" } : {}),
         });
   return (
-    <div className="flex min-w-0 items-center rounded-2xl border border-border bg-card shadow-sm transition-colors focus-within:border-primary/60">
+    <div className="flex min-w-0 items-center rounded-lg border border-border bg-card transition-colors focus-within:border-primary/60">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"
             aria-label={`${label} date: ${selected ? selected.toLocaleDateString() : "Any date"}`}
-            className="flex min-h-14 min-w-0 flex-1 items-center gap-2 rounded-2xl px-3 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <CalendarDays aria-hidden="true" className="size-4 shrink-0 text-primary" />
             <span className="min-w-0">
@@ -66,7 +66,7 @@ export function ArchiveDateFilter({
           align={align}
           sideOffset={8}
           aria-label={`Choose ${label.toLowerCase()} date`}
-          className="w-auto max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl p-0 duration-200 motion-reduce:animate-none"
+          className="w-auto max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-lg p-0 duration-200 motion-reduce:animate-none"
         >
           <Suspense
             fallback={
@@ -100,7 +100,7 @@ export function ArchiveDateFilter({
           type="button"
           aria-label={`Clear ${label.toLowerCase()} date`}
           onClick={() => onChange("")}
-          className="mr-1 flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="mr-0.5 flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X aria-hidden="true" className="size-3.5" />
         </button>

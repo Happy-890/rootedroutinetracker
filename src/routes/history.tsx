@@ -81,12 +81,12 @@ function Archives({ kind, setKind }: { kind: Search["kind"]; setKind: (k: Search
     <div>
       <div className="grid grid-cols-2 gap-2">
         <Select value={kind} onValueChange={(value) => setKind(value as Search["kind"])}>
-          <SelectTrigger aria-label="Entry type" className="col-span-2 h-11 rounded-2xl border-border bg-card px-4 font-semibold">
+          <SelectTrigger aria-label="Entry type" className="col-span-2 h-10 rounded-lg border-border bg-card px-3 text-sm font-semibold">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent sideOffset={6} className="rooted-menu-motion rounded-2xl">
-            <SelectItem value="all" className="min-h-11 rounded-xl">All</SelectItem><SelectItem value="learn" className="min-h-11 rounded-xl">Learn</SelectItem>
-            <SelectItem value="gratitude" className="min-h-11 rounded-xl">Gratitude</SelectItem><SelectItem value="journal" className="min-h-11 rounded-xl">Journal</SelectItem>
+          <SelectContent sideOffset={6} className="rooted-menu-motion rounded-lg">
+            <SelectItem value="all" className="min-h-10 rounded-md">All</SelectItem><SelectItem value="learn" className="min-h-10 rounded-md">Learn</SelectItem>
+            <SelectItem value="gratitude" className="min-h-10 rounded-md">Gratitude</SelectItem><SelectItem value="journal" className="min-h-10 rounded-md">Journal</SelectItem>
           </SelectContent>
         </Select>
         <ArchiveDateFilter label="From" value={from} onChange={setFrom} today={today} max={to || today} />

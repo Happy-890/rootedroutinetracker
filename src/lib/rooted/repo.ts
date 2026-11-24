@@ -70,6 +70,9 @@ export class LocalRepo implements Repo {
   }
 }
 
+// Point-award functions are newer than the generated types.
+const rpc = supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: Error | null }>;
+
 function offlineGuard() {
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     throw new Error("You're offline. This change was not saved.");
@@ -142,23 +145,10 @@ export class CloudRepo implements Repo {
   }
   async setActivity(date: string, a: Activity, on: boolean) {
     offlineGuard();
-    if (on) {
-      const { error } = await supabase
-        .from("activity_records")
-        .upsert({ user_id: this.userId, local_date: date, activity: a }, {
-          onConflict: "user_id,local_date,activity",
-          ignoreDuplicates: true,
-        });
-      if (error) throw error;
-    } else {
-      const { error } = await supabase
-        .from("activity_records")
-        .delete()
-        .eq("user_id", this.userId)
-        .eq("local_date", date)
-        .eq("activity", a);
-      if (error) throw error;
-    }
+    assertOpenScoringDate(date);
+    // The database derives today's Central date and only allows toggle habits.
+    const { error } = await rpc("toggle_rooted_activity", { p_activity: a, p_on: on });
+    if (error) throw error;
   }
   async createEntry(entry: Entry) {
     offlineGuard();
@@ -201,14 +191,12 @@ export class CloudRepo implements Repo {
       if (error) throw error;
     }
     const today = scoringDate();
-    const recs = Object.keys(g.records).flatMap((k) => {
+    const activities = Object.keys(g.records).flatMap((k) => {
       const [local_date, activity] = k.split("|");
-      return local_date === today && activity ? [{ user_id: this.userId, local_date, activity }] : [];
+      return local_date === today && activity ? [activity] : [];
     });
-    if (recs.length) {
-      const { error } = await supabase
-        .from("activity_records")
-        .upsert(recs, { onConflict: "user_id,local_date,activity", ignoreDuplicates: true });
+    if (activities.length) {
+      const { error } = await rpc("import_rooted_activity", { p_activities: activities });
       if (error) throw error;
     }
     if (g.entries.length) {

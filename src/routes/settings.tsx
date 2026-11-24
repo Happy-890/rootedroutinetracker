@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useRooted } from "@/lib/rooted/store";
 import { isValidTimeZone } from "@/lib/rooted/logic";
 import { useAppearance, type Appearance } from "@/lib/rooted/appearance";
-import { Sun, Moon, Monitor, UserRound, LogOut, Sprout, Check } from "lucide-react";
+import { Sun, Moon, Monitor, UserRound, Sprout, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ReminderSettings } from "@/components/rooted/ReminderSettings";
+import { DangerZone } from "@/components/rooted/DangerZone";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -221,7 +222,7 @@ function SettingsPage() {
                 <option key={z} value={z} />
               ))}
           </datalist>
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+          <div>
             <span
               role="status"
               aria-live="polite"
@@ -241,10 +242,6 @@ function SettingsPage() {
                     : "Saved"}
               </span>
             </span>
-            <Button variant="ghost" onClick={() => void r.signOut()}>
-              <LogOut />
-              {r.mode === "account" ? "Log out" : "Leave guest"}
-            </Button>
           </div>
           {r.mode === "account" && r.userId && (
             <AccountSecurity email={r.email} userId={r.userId} />
@@ -302,6 +299,7 @@ function SettingsPage() {
             <p className="mt-2">In Safari, tap Share → Add to Home Screen → Add.</p>
           </details>
         </section>
+        <DangerZone />
       </div>
     </Shell>
   );

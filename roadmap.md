@@ -5,3 +5,5 @@
 - [x] Verify signed-in reminder creation, reload persistence and deletion; check light/dark and 320/390/1280 layouts.
 - [x] Verify Central-time cutoff and reminder payload rules with regression tests; automatic app check is clean.
 - [ ] Verify updated notification banners and installed offline launch on iPhone — requires publishing this update and testing the installed phone app.
+- [x] Slim History date filters; Danger Zone with Log out + Delete account (cloud + device wipe).
+- [ ] Apply staged points-lockdown + account-deletion database change — blocked: hosted database paused (out of Cloud credits).

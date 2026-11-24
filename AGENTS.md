@@ -23,3 +23,4 @@
 
 - Backup export reads one owned database snapshot. Restore must verify the server signature and account identity before invoking the service-only atomic merge; only verified restoration of previously recorded activity may bypass the normal closed-day insert guard. Never trust scores from unsigned files.
 - Growth records (weekly reviews, priorities and habit commitments) are unscored and owner-scoped. Keep their validated RPCs separate from activity awards, retain per-account drafts, preserve merge-only imports/restores, and use Central calendar dates and Monday-based weeks.
+- Signed-in clients never write activity_records directly: habit toggles and guest imports go through validated database functions that derive the Central date; account deletion runs a service-only wipe function before removing the auth user, so no client path can award or erase arbitrary points.
